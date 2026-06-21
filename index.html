@@ -86,24 +86,81 @@
             font-size: 0.95em;
         }
 
-        /* Банер оновлення VAM */
+        /* ============ UPDATE BANNER ============ */
         .update-banner {
             display: none;
-            align-items: center;
-            justify-content: space-between;
-            gap: 14px;
-            flex-wrap: wrap;
-            background: rgba(102,126,234,0.12);
-            border: 1px solid rgba(102,126,234,0.35);
+            background: rgba(220,53,69,0.12);
+            border: 1px solid rgba(220,53,69,0.35);
             border-radius: 10px;
-            padding: 14px 20px;
+            padding: 18px 20px;
             margin-bottom: 20px;
-            font-size: 0.9em;
-            color: #cdd4ff;
+            color: #ffb3ba;
         }
-        .update-banner.visible { display: flex; }
-        .update-banner strong { color: #a5b4fc; }
-        .update-banner .btn-row { margin: 0; }
+        .update-banner.show { display: block; }
+        .update-banner-head {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+        .update-banner-title {
+            font-weight: 700;
+            font-size: 1.05em;
+            color: #ff8a95;
+        }
+        .update-banner-ver {
+            font-size: 0.8em;
+            background: rgba(0,0,0,0.3);
+            padding: 2px 9px;
+            border-radius: 20px;
+            color: #ffd6d9;
+            font-family: monospace;
+        }
+        .update-banner-notes {
+            font-size: 0.88em;
+            line-height: 1.6;
+            color: #ffd6d9;
+            margin-bottom: 14px;
+            white-space: pre-wrap;
+        }
+        .update-banner-btns {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .update-banner-btns button {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-update {
+            background: linear-gradient(135deg,#dc3545,#a51c2c);
+            color: #fff;
+        }
+        .btn-update:hover { opacity: 0.88; transform: translateY(-1px); }
+
+        .btn-check-update {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            color: #ccc;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-check-update:hover { background: rgba(255,255,255,0.15); }
+        .btn-check-update.checking .upd-spin {
+            display: inline-block;
+            animation: spin 0.9s linear infinite;
+        }
+        @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+        .btn-check-update.up-to-date { color: #5be58b; border-color: rgba(40,167,69,0.3); }
 
         details summary {
             cursor: pointer;
@@ -681,14 +738,6 @@
 </div>
 <div class="container">
 
-    <div id="updateBanner" class="update-banner">
-        <span id="updateBannerText"></span>
-        <div class="btn-row">
-            <button id="updateBannerBtn" class="btn-primary" onclick="applyVamUpdate()">⬆ Оновити</button>
-            <button class="btn-secondary" onclick="dismissUpdateBanner()">Пізніше</button>
-        </div>
-    </div>
-
     <div class="header">
         <div>
             <h1>🎬 Video Alert Manager</h1>
@@ -698,8 +747,26 @@
             <div class="status-dot"></div>
             <span id="statusText">Підключення...</span>
         </div>
-        <button class="btn-secondary" style="padding:8px 14px;font-size:0.85em" title="Перевірити оновлення VAM на GitHub" onclick="checkForVamUpdates(false)">🔄 Оновлення</button>
+        <button id="checkUpdateBtn" class="btn-check-update" onclick="checkForUpdate()" title="Перевірити чи є нова версія на GitHub">
+            <span class="upd-spin">🔄</span> <span id="checkUpdateBtnText">Перевірити оновлення</span>
+        </button>
     </div>
+
+    <!-- UPDATE BANNER -->
+    <div class="update-banner" id="updateBanner">
+        <div class="update-banner-head">
+            <span style="font-size:1.3em">⚠️</span>
+            <span class="update-banner-title">Доступне оновлення!</span>
+            <span class="update-banner-ver" id="updateVerText"></span>
+        </div>
+        <div class="update-banner-notes" id="updateNotesText"></div>
+        <div class="update-banner-btns">
+            <button class="btn-update" onclick="openUpdateFile('index')">⬇️ Завантажити новий index.html</button>
+            <button class="btn-update" onclick="openUpdateFile('overlay')">⬇️ Завантажити новий overlay.html</button>
+            <button class="btn-secondary" onclick="dismissUpdateBanner()">Закрити</button>
+        </div>
+    </div>
+
 
     <!-- CHAT MESSAGE TOGGLE -->
     <div class="chat-toggle-bar">
@@ -2130,6 +2197,10 @@ public class CPHInline
 const WS_URL   = 'ws://127.0.0.1:8080/';
 const HTTP_URL = 'http://127.0.0.1:7474';
 
+// ── Версія застосунку та джерело перевірки оновлень ──────────────────
+const APP_VERSION   = '1.0.0';
+const MANIFEST_URL  = 'https://raw.githubusercontent.com/djesld12q-stack/RewardService/refs/heads/main/manifest.json';
+
 // =====================================================================
 // STATE
 // =====================================================================
@@ -2151,10 +2222,6 @@ const bulkSelected = new Set();
 document.addEventListener('DOMContentLoaded', () => {
     loadAlerts();
     connectWebSocket();
-
-    // Авто-перевірка оновлень VAM при відкритті адмінки (silent — без тосту, лише банер)
-    setTimeout(() => checkForVamUpdates(true), 1500);
-
 
     // ── Pause toggle ──────────────────────────────────────────
     const pauseToggleEl = document.getElementById('pauseToggle');
@@ -2273,91 +2340,6 @@ function handleMessage(data) {
         // Додаємо в трекер черги
         const matched = alerts.find(a => String(a.rewardId).trim() === String(rewardId).trim());
         if (matched) enqueuePlayback(matched);
-        return;
-    }
-
-    // ── Broadcast від VAM Update Check/Apply (WebsocketBroadcastJson → General/Custom) ──
-    if (data.event?.source === 'General' && data.event?.type === 'Custom') {
-        let inner = data.data;
-        if (typeof inner === 'string') { try { inner = JSON.parse(inner); } catch(_) {} }
-
-        if (inner?.action === 'UpdateStatus') {
-            handleVamUpdateStatus(inner.data || {});
-            return;
-        }
-        if (inner?.action === 'UpdateApplied') {
-            handleVamUpdateApplied(inner.data || {});
-            return;
-        }
-    }
-}
-
-// =====================================================================
-// АВТО-ОНОВЛЕННЯ VAM (index.html / overlay.html з GitHub)
-// =====================================================================
-function checkForVamUpdates(silent) {
-    if (!silent) toast('🔄 Перевіряю оновлення VAM...', 'info');
-
-    fetch(`${HTTP_URL}/DoAction`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            action: { name: 'VAM Update Check', group: '' },
-            args:   { silent: !!silent }
-        }),
-        signal: AbortSignal.timeout(5000)
-    }).catch(() => {});
-}
-
-function applyVamUpdate() {
-    const btn = document.getElementById('updateBannerBtn');
-    if (btn) { btn.disabled = true; btn.textContent = '⏳ Оновлюю...'; }
-
-    fetch(`${HTTP_URL}/DoAction`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            action: { name: 'VAM Update Apply', group: '' },
-            args:   {}
-        }),
-        signal: AbortSignal.timeout(5000)
-    }).catch(() => {});
-}
-
-function dismissUpdateBanner() {
-    const el = document.getElementById('updateBanner');
-    if (el) el.classList.remove('visible');
-}
-
-function handleVamUpdateStatus(d) {
-    const el   = document.getElementById('updateBanner');
-    const text = document.getElementById('updateBannerText');
-    if (!el || !text) return;
-
-    if (d.error) {
-        console.warn('VAM update check error:', d.error);
-        return;
-    }
-    if (d.updateAvailable) {
-        text.innerHTML = `🆕 Доступна нова версія <strong>${escHtml(d.remoteVersion)}</strong> (зараз: ${escHtml(d.localVersion)})${d.notes ? ' — ' + escHtml(d.notes) : ''}`;
-        el.classList.add('visible');
-    } else {
-        el.classList.remove('visible');
-    }
-}
-
-function handleVamUpdateApplied(d) {
-    const btn  = document.getElementById('updateBannerBtn');
-    const text = document.getElementById('updateBannerText');
-    if (btn) { btn.disabled = false; btn.textContent = '⬆ Оновити'; }
-    if (!text) return;
-
-    if (d.success) {
-        text.textContent = '✅ ' + (d.message || 'Оновлено.');
-        toast('✅ VAM оновлено — онови сторінку (F5)', 'success');
-    } else {
-        text.textContent = '⚠️ ' + (d.message || 'Помилка оновлення.');
-        toast('⚠️ Оновлення не вдалося', 'error');
     }
 }
 
@@ -3474,6 +3456,91 @@ function wlog(type, text) {
             args:    { message: `INDEX|${type}|${text}` }
         }));
     } catch(_) {}
+}
+
+// =====================================================================
+// ПЕРЕВІРКА ОНОВЛЕНЬ (manifest.json на GitHub)
+// =====================================================================
+let latestManifest = null;
+
+async function checkForUpdate() {
+    const btn     = document.getElementById('checkUpdateBtn');
+    const btnText = document.getElementById('checkUpdateBtnText');
+    if (!btn) return;
+
+    btn.classList.remove('up-to-date');
+    btn.classList.add('checking');
+    btn.disabled = true;
+    if (btnText) btnText.textContent = 'Перевірка...';
+
+    try {
+        const res = await fetch(MANIFEST_URL + '?_=' + Date.now(), { cache: 'no-store' });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const manifest = await res.json();
+        latestManifest = manifest;
+
+        if (manifest && manifest.version && isNewerVersion(manifest.version, APP_VERSION)) {
+            showUpdateBanner(manifest);
+            if (btnText) btnText.textContent = 'Є оновлення!';
+            toast(`🔔 Доступна нова версія ${manifest.version}`, 'info');
+        } else {
+            if (btnText) btnText.textContent = 'Версія актуальна';
+            btn.classList.add('up-to-date');
+            toast('✅ У вас остання версія', 'success');
+            setTimeout(() => {
+                if (btnText) btnText.textContent = 'Перевірити оновлення';
+                btn.classList.remove('up-to-date');
+            }, 4000);
+        }
+    } catch (err) {
+        if (btnText) btnText.textContent = 'Помилка перевірки';
+        toast('⚠️ Не вдалося перевірити оновлення', 'error');
+        setTimeout(() => { if (btnText) btnText.textContent = 'Перевірити оновлення'; }, 4000);
+    } finally {
+        btn.classList.remove('checking');
+        btn.disabled = false;
+    }
+}
+
+// Порівняння семвер-версій виду "1.2.3"
+function isNewerVersion(remote, local) {
+    const r = String(remote).split('.').map(n => parseInt(n, 10) || 0);
+    const l = String(local).split('.').map(n => parseInt(n, 10) || 0);
+    for (let i = 0; i < Math.max(r.length, l.length); i++) {
+        const rv = r[i] || 0, lv = l[i] || 0;
+        if (rv > lv) return true;
+        if (rv < lv) return false;
+    }
+    return false;
+}
+
+function showUpdateBanner(manifest) {
+    const banner   = document.getElementById('updateBanner');
+    const verText  = document.getElementById('updateVerText');
+    const notesEl  = document.getElementById('updateNotesText');
+    if (!banner) return;
+
+    if (verText) verText.textContent = `${APP_VERSION} → ${manifest.version}`;
+    if (notesEl) notesEl.textContent = manifest.notes || 'Вийшла нова версія програми.';
+    banner.classList.add('show');
+}
+
+function dismissUpdateBanner() {
+    const banner = document.getElementById('updateBanner');
+    if (banner) banner.classList.remove('show');
+}
+
+function openUpdateFile(which) {
+    if (!latestManifest) return;
+    const url = which === 'overlay' ? latestManifest.overlayUrl : latestManifest.indexUrl;
+    if (!url) {
+        toast('⚠️ Посилання у manifest.json відсутнє', 'error');
+        return;
+    }
+    window.open(url, '_blank');
+    toast(which === 'overlay'
+        ? '⬇️ Відкрито overlay.html — збережіть файл і замініть старий'
+        : '⬇️ Відкрито index.html — збережіть файл і замініть старий', 'info');
 }
 
 function escHtml(str) {
