@@ -34,6 +34,21 @@
         .header h1 { font-size: 1.8em; color: #fff; }
         .header p { color: #aaa; font-size: 0.9em; margin-top: 4px; }
 
+        .app-version-badge {
+            display: inline-block;
+            vertical-align: middle;
+            margin-left: 10px;
+            font-size: 0.4em;
+            font-weight: 700;
+            font-family: monospace;
+            color: #8fa3f5;
+            background: rgba(102,126,234,0.15);
+            border: 1px solid rgba(102,126,234,0.3);
+            padding: 3px 10px;
+            border-radius: 20px;
+            letter-spacing: 0.5px;
+        }
+
         .status-bar {
             display: flex;
             align-items: center;
@@ -740,7 +755,7 @@
 
     <div class="header">
         <div>
-            <h1>🎬 Video Alert Manager</h1>
+            <h1>🎬 Video Alert Manager <span class="app-version-badge" id="appVersionBadge">v1.0.0</span></h1>
             <p>Налаштування відео-алертів для Twitch Channel Points</p>
         </div>
         <div id="statusBar" class="status-bar">
@@ -761,8 +776,7 @@
         </div>
         <div class="update-banner-notes" id="updateNotesText"></div>
         <div class="update-banner-btns">
-            <button class="btn-update" onclick="openUpdateFile('index')">⬇️ Завантажити новий index.html</button>
-            <button class="btn-update" onclick="openUpdateFile('overlay')">⬇️ Завантажити новий overlay.html</button>
+            <button class="btn-update" id="downloadAllBtn" onclick="downloadAllUpdateFiles()">⬇️ Завантажити оновлення</button>
             <button class="btn-secondary" onclick="dismissUpdateBanner()">Закрити</button>
         </div>
     </div>
@@ -2223,6 +2237,10 @@ document.addEventListener('DOMContentLoaded', () => {
     loadAlerts();
     connectWebSocket();
 
+    // ── Версія застосунку в шапці ───────────────────────────────
+    const verBadgeEl = document.getElementById('appVersionBadge');
+    if (verBadgeEl) verBadgeEl.textContent = 'v' + APP_VERSION;
+
     // ── Pause toggle ──────────────────────────────────────────
     const pauseToggleEl = document.getElementById('pauseToggle');
     if (pauseToggleEl) {
@@ -3530,18 +3548,56 @@ function dismissUpdateBanner() {
     if (banner) banner.classList.remove('show');
 }
 
-function openUpdateFile(which) {
+// Скачує всі 3 файли оновлення одним натисканням:
+// index.html, overlay.html та manifest.json (щоб версія manifest.json
+// теж оновилась локально і повторна перевірка не тригерила той самий банер)
+async function downloadAllUpdateFiles() {
     if (!latestManifest) return;
-    const url = which === 'overlay' ? latestManifest.overlayUrl : latestManifest.indexUrl;
-    if (!url) {
+    const files = latestManifest.files || {};
+    const indexUrl   = files['index.html'];
+    const overlayUrl = files['overlay.html'];
+
+    if (!indexUrl || !overlayUrl) {
         toast('⚠️ Посилання у manifest.json відсутнє', 'error');
         return;
     }
-    window.open(url, '_blank');
-    toast(which === 'overlay'
-        ? '⬇️ Відкрито overlay.html — збережіть файл і замініть старий'
-        : '⬇️ Відкрито index.html — збережіть файл і замініть старий', 'info');
+
+    const btn = document.getElementById('downloadAllBtn');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Завантаження...'; }
+
+    try {
+        await forceDownload(indexUrl, 'index.html');
+        await forceDownload(overlayUrl, 'overlay.html');
+        await forceDownload(MANIFEST_URL, 'manifest.json');
+        toast('✅ Усі файли завантажено — замініть ними старі (index.html, overlay.html, manifest.json)', 'success');
+        dismissUpdateBanner();
+    } finally {
+        if (btn) { btn.disabled = false; btn.textContent = '⬇️ Завантажити оновлення'; }
+    }
 }
+
+// Примусове скачування файлу (а не відкриття у вкладці) —
+// фетчимо як blob і клікаємо по тимчасовому <a download>
+async function forceDownload(url, filename) {
+    try {
+        const res = await fetch(url + '?_=' + Date.now(), { cache: 'no-store' });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const blob = await res.blob();
+        const blobUrl = URL.createObjectURL(blob);
+
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 4000);
+    } catch (err) {
+        toast(`⚠️ Не вдалося завантажити ${filename}, відкриваю у вкладці`, 'error');
+        window.open(url, '_blank');
+    }
+}
+
 
 function escHtml(str) {
     if (!str) return '';
