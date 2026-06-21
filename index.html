@@ -762,7 +762,7 @@
 
     <div class="header">
         <div>
-            <h1>🎬 Video Alert Manager <span class="app-version-badge" id="appVersionBadge">v1.20.1</span></h1>
+            <h1>🎬 Video Alert Manager <span class="app-version-badge" id="appVersionBadge">v1.0.0</span></h1>
             <p>Налаштування відео-алертів для Twitch Channel Points</p>
         </div>
         <div id="statusBar" class="status-bar">
@@ -2159,11 +2159,17 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 public class CPHInline
 {
     private static readonly HttpClient http = new HttpClient();
+    // Захист від паралельних викликів — якщо HTTP-запит на InstallUpdate
+    // прийде кілька разів підряд (подвійний клік, ретрай), наступні виклики
+    // чекають, поки попередній повністю завершить запис файлів, замість
+    // того щоб одночасно писати в ті самі файли і пошкодити їх.
+    private static readonly SemaphoreSlim gate = new SemaphoreSlim(1, 1);
 
     public bool Execute()
     {
@@ -2171,6 +2177,24 @@ public class CPHInline
     }
 
     private async Task&lt;bool&gt; InstallAsync()
+    {
+        if (!await gate.WaitAsync(TimeSpan.FromSeconds(30)))
+        {
+            CPH.LogWarn("InstallUpdate: попередній виклик ще виконується, новий пропущено");
+            return false;
+        }
+
+        try
+        {
+            return await DoInstallAsync();
+        }
+        finally
+        {
+            gate.Release();
+        }
+    }
+
+    private async Task&lt;bool&gt; DoInstallAsync()
     {
         string indexUrl    = args.ContainsKey("indexUrl")    ? args["indexUrl"].ToString()    : "https://raw.githubusercontent.com/djesld12q-stack/RewardService/refs/heads/main/index.html";
         string overlayUrl  = args.ContainsKey("overlayUrl")  ? args["overlayUrl"].ToString()  : "https://raw.githubusercontent.com/djesld12q-stack/RewardService/refs/heads/main/overlay.html";
@@ -2578,7 +2602,9 @@ const WS_URL   = 'ws://127.0.0.1:8080/';
 const HTTP_URL = 'http://127.0.0.1:7474';
 
 // ── Версія застосунку та джерело перевірки оновлень ──────────────────
-const APP_VERSION   = '1.0.0';
+// let, бо при автоматичному оновленні (installUpdateAutomatically) значення
+// оновлюється в рантаймі без перезавантаження сторінки
+let APP_VERSION   = '1.0.0';
 const MANIFEST_URL  = 'https://raw.githubusercontent.com/djesld12q-stack/RewardService/refs/heads/main/manifest.json';
 
 // =====================================================================
@@ -3921,10 +3947,15 @@ function dismissUpdateBanner() {
 // manifest.json з GitHub і записує їх ПРЯМО в робочу теку на диску (без
 // Downloads, без ручного копіювання). Потім читає update-result.json,
 // щоб показати реальний статус, і пропонує перезавантажити сторінку.
+let installInProgress = false;
+
 async function installUpdateAutomatically() {
+    if (installInProgress) return; // захист від подвійного кліку / паралельних викликів
+    installInProgress = true;
+
     const btn    = document.getElementById('installUpdateBtn');
     const resBox = document.getElementById('installCheckResult');
-    if (!btn || !resBox) return;
+    if (!btn || !resBox) { installInProgress = false; return; }
 
     const expectedVersion = latestManifest && latestManifest.version ? latestManifest.version : null;
 
@@ -3967,17 +3998,30 @@ async function installUpdateAutomatically() {
 
         resBox.style.background = 'rgba(40,167,69,0.15)';
         resBox.style.color = '#5be58b';
-        resBox.textContent = `✅ Файли записано на диск (версія ${data.installedVersion || expectedVersion || '?'}). Зараз сторінка перезавантажиться, щоб підхопити нову версію...`;
-        toast(`✅ Оновлено до ${data.installedVersion || expectedVersion}. Перезавантаження...`, 'success');
+        resBox.textContent = `✅ Файли записано на диск (версія ${data.installedVersion || expectedVersion || '?'}). Оновлюю інтерфейс...`;
+        toast(`✅ Оновлено до ${data.installedVersion || expectedVersion}. Версію на диску підтверджено.`, 'success');
 
-        // 4. Переходимо на той самий URL з cache-busting параметром —
-        //    звичайний reload() в OBS Browser Source (CEF) часто ігнорує
-        //    forceReload і віддає файл зі свого кешу за URL. Додавання
-        //    ?_=timestamp гарантовано обходить кеш незалежно від заголовків сервера.
+        // 4. НЕ робимо location.reload() / location.href — HTTP Server у Streamer.bot
+        //    (v1.0.4) кешує вміст файлу в пам'яті процесу і часто віддає стару
+        //    відповідь на повторний GET того самого шляху незалежно від
+        //    cache-busting query-параметра. Тому замість нового мережевого
+        //    запиту до index.html просто оновлюємо стан на місці: піднімаємо
+        //    APP_VERSION у пам'яті JS і перемальовуємо бейдж в шапці.
+        //    Реальний файл на диску вже оновлено (це підтвердив update-result.json) —
+        //    повна перезагрузка JS станеться сама при наступному природньому
+        //    відкритті панелі (перезапуск OBS / docked panel), а до того часу
+        //    адмінка просто працює далі на новій логіці без розриву з'єднання.
+        if (data.installedVersion) {
+            APP_VERSION = data.installedVersion;
+            const verBadgeEl = document.getElementById('appVersionBadge');
+            if (verBadgeEl) verBadgeEl.textContent = 'v' + APP_VERSION;
+        }
+        btn.textContent = '✅ Встановлено';
         setTimeout(() => {
-            const base = window.location.href.split('?')[0].split('#')[0];
-            window.location.href = base + '?_=' + Date.now();
-        }, 1800);
+            dismissUpdateBanner();
+            btn.disabled = false;
+            btn.textContent = '🚀 Встановити оновлення автоматично';
+        }, 2500);
 
     } catch (err) {
         resBox.style.background = 'rgba(220,53,69,0.15)';
@@ -3986,6 +4030,8 @@ async function installUpdateAutomatically() {
         toast('⚠️ Не вдалось викликати InstallUpdate', 'error');
         btn.disabled = false;
         btn.textContent = '🚀 Встановити оновлення автоматично';
+    } finally {
+        installInProgress = false;
     }
 }
 
