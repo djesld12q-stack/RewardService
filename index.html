@@ -3,6 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Заборона кешування — щоб OBS Browser Source / CEF завжди тягнув свіжу версію
+         файлу з диска, а не стару закешовану відповідь за тим самим URL. Браузерний
+         кеш інколи ігнорує HTTP Cache-Control від локального сервера Streamer.bot,
+         тому дублюємо заборону тут, на рівні самого документа. -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Video Alert Manager</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -755,7 +762,7 @@
 
     <div class="header">
         <div>
-            <h1>🎬 Video Alert Manager <span class="app-version-badge" id="appVersionBadge">v1.1.1</span></h1>
+            <h1>🎬 Video Alert Manager <span class="app-version-badge" id="appVersionBadge">v1.0.0</span></h1>
             <p>Налаштування відео-алертів для Twitch Channel Points</p>
         </div>
         <div id="statusBar" class="status-bar">
@@ -3963,8 +3970,14 @@ async function installUpdateAutomatically() {
         resBox.textContent = `✅ Файли записано на диск (версія ${data.installedVersion || expectedVersion || '?'}). Зараз сторінка перезавантажиться, щоб підхопити нову версію...`;
         toast(`✅ Оновлено до ${data.installedVersion || expectedVersion}. Перезавантаження...`, 'success');
 
-        // 4. Перезавантажуємо сторінку, щоб у браузері запрацювала вже нова версія index.html
-        setTimeout(() => { window.location.reload(true); }, 1800);
+        // 4. Переходимо на той самий URL з cache-busting параметром —
+        //    звичайний reload() в OBS Browser Source (CEF) часто ігнорує
+        //    forceReload і віддає файл зі свого кешу за URL. Додавання
+        //    ?_=timestamp гарантовано обходить кеш незалежно від заголовків сервера.
+        setTimeout(() => {
+            const base = window.location.href.split('?')[0].split('#')[0];
+            window.location.href = base + '?_=' + Date.now();
+        }, 1800);
 
     } catch (err) {
         resBox.style.background = 'rgba(220,53,69,0.15)';
