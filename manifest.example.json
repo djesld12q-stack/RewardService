@@ -1,0 +1,9 @@
+{
+  "version": "1.0.0",
+  "released": "2026-06-21",
+  "notes": "Опис змін цього релізу — покажеться у банері адмінки",
+  "files": {
+    "index.html": "https://raw.githubusercontent.com/djesld12q-stack/RewardService/refs/heads/main/index.html",
+    "overlay.html": "https://raw.githubusercontent.com/djesld12q-stack/RewardService/refs/heads/main/overlay.html"
+  }
+}

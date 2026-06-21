@@ -86,50 +86,24 @@
             font-size: 0.95em;
         }
 
-        /* Update banner */
+        /* Банер оновлення VAM */
         .update-banner {
             display: none;
-            background: rgba(40,167,69,0.12);
-            border: 1px solid rgba(40,167,69,0.35);
-            border-radius: 10px;
-            padding: 16px 20px;
-            margin-bottom: 20px;
             align-items: center;
             justify-content: space-between;
-            gap: 16px;
+            gap: 14px;
             flex-wrap: wrap;
-        }
-        .update-banner.show { display: flex; }
-        .update-banner .ub-text { color: #b9f6d0; font-size: 0.92em; line-height: 1.6; }
-        .update-banner .ub-text strong { color: #5be58b; }
-        .update-banner .ub-notes {
-            display: block;
-            margin-top: 4px;
-            color: #8fd9ad;
+            background: rgba(102,126,234,0.12);
+            border: 1px solid rgba(102,126,234,0.35);
+            border-radius: 10px;
+            padding: 14px 20px;
+            margin-bottom: 20px;
             font-size: 0.9em;
-            white-space: pre-line;
+            color: #cdd4ff;
         }
-        .update-banner .ub-actions { display: flex; gap: 10px; flex-shrink: 0; }
-        .update-banner button {
-            border: none;
-            border-radius: 8px;
-            padding: 9px 18px;
-            font-weight: 700;
-            font-size: 0.88em;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .update-banner .ub-apply {
-            background: #28a745;
-            color: #fff;
-        }
-        .update-banner .ub-apply:hover { background: #34c759; }
-        .update-banner .ub-apply:disabled { opacity: 0.6; cursor: wait; }
-        .update-banner .ub-dismiss {
-            background: rgba(255,255,255,0.08);
-            color: #ccc;
-        }
-        .update-banner .ub-dismiss:hover { background: rgba(255,255,255,0.15); }
+        .update-banner.visible { display: flex; }
+        .update-banner strong { color: #a5b4fc; }
+        .update-banner .btn-row { margin: 0; }
 
         details summary {
             cursor: pointer;
@@ -707,15 +681,24 @@
 </div>
 <div class="container">
 
+    <div id="updateBanner" class="update-banner">
+        <span id="updateBannerText"></span>
+        <div class="btn-row">
+            <button id="updateBannerBtn" class="btn-primary" onclick="applyVamUpdate()">⬆ Оновити</button>
+            <button class="btn-secondary" onclick="dismissUpdateBanner()">Пізніше</button>
+        </div>
+    </div>
+
     <div class="header">
         <div>
             <h1>🎬 Video Alert Manager</h1>
-            <p>Налаштування відео-алертів для Twitch Channel Points · <span id="versionLabel" style="opacity:0.7">v1.0.4</span></p>
+            <p>Налаштування відео-алертів для Twitch Channel Points</p>
         </div>
         <div id="statusBar" class="status-bar">
             <div class="status-dot"></div>
             <span id="statusText">Підключення...</span>
         </div>
+        <button class="btn-secondary" style="padding:8px 14px;font-size:0.85em" title="Перевірити оновлення VAM на GitHub" onclick="checkForVamUpdates(false)">🔄 Оновлення</button>
     </div>
 
     <!-- CHAT MESSAGE TOGGLE -->
@@ -1911,170 +1894,10 @@ public class CPHInline
     }
 }</code>
 
-            <strong>📦 Як працює авто-оновлення з GitHub:</strong><br>
-            1) У публічному репозиторії (зараз: <code>UPDATE_MANIFEST_URL</code> в коді index.html) лежить файл <code>manifest.json</code> з полями <code>version</code>, <code>notes</code>, <code>indexUrl</code>, <code>overlayUrl</code>.<br>
-            2) При завантаженні сторінки index.html сам перевіряє manifest.json і звіряє <code>version</code> з власним <code>APP_VERSION</code>. Якщо в репо версія новіша — з'являється зелений банер.<br>
-            3) Кнопка "Оновити зараз" викликає Action <code>UpdateAppFiles</code> (нижче) — вона завантажує нові файли напряму з GitHub і перезаписує <code>index.html</code> / <code>overlay.html</code> на диску, попередньо зробивши <code>.bak</code> копії.<br>
-            4) Після оновлення онови сторінку (F5) і перезавантаж overlay.html у OBS Browser Source.<br>
-            <small style="color:#aaa">💡 Щоб випустити нову версію: онови <code>APP_VERSION</code> в обох файлах, заливаєш файли в репозиторій, і піднімаєш <code>version</code> у manifest.json — стрімерам прилетить банер автоматично.</small><br><br>
-
-            <strong>15. Action "UpdateAppFiles"</strong> 🚀 — завантажує нові index.html / overlay.html з GitHub (raw) і перезаписує їх на диску, з бекапом старих версій<br>
-            Sub-action → <code>Execute C# Code</code>. Trigger: нічого (викликається через HTTP DoAction з кнопки "Оновити зараз" в index.html).<br>
-            <small style="color:#aaa">✨ Шукає обидва файли тим самим способом, що й WriteOverlayConfig (кеш <code>overlayHtmlPath</code> → теж сама тека містить index.html). Перед перезаписом створює <code>index.html.bak</code> / <code>overlay.html.bak</code>. Аргументи <code>indexUrl</code>, <code>overlayUrl</code>, <code>version</code> приходять з manifest.json через index.html.</small><br><br>
-            <code style="display:block;white-space:pre;padding:8px;margin:6px 0;background:rgba(0,0,0,0.4);border-radius:6px;overflow-x:auto">using System;
-using System.IO;
-using System.Linq;
-using System.Net.Http;
-using System.Threading.Tasks;
-
-public class CPHInline
-{
-    public bool Execute()
-    {
-        string indexUrl   = args.ContainsKey("indexUrl")   ? args["indexUrl"].ToString()   : "";
-        string overlayUrl = args.ContainsKey("overlayUrl") ? args["overlayUrl"].ToString() : "";
-        string version    = args.ContainsKey("version")    ? args["version"].ToString()    : "?";
-
-        if (string.IsNullOrWhiteSpace(indexUrl) &amp;&amp; string.IsNullOrWhiteSpace(overlayUrl))
-        {
-            CPH.LogError("UpdateAppFiles: не передано жодного URL (indexUrl/overlayUrl порожні)");
-            return false;
-        }
-
-        string overlayPath = FindFile("overlay.html");
-        if (overlayPath == null)
-        {
-            CPH.LogError("UpdateAppFiles: overlay.html не знайдено автоматично — постав globalVar 'overlayHtmlPath'.");
-            return false;
-        }
-
-        string folder    = Path.GetDirectoryName(overlayPath);
-        string indexPath = Path.Combine(folder, "index.html");
-
-        bool okIndex   = true;
-        bool okOverlay = true;
-
-        if (!string.IsNullOrWhiteSpace(indexUrl))
-            okIndex = DownloadAndReplace(indexUrl, indexPath).GetAwaiter().GetResult();
-
-        if (!string.IsNullOrWhiteSpace(overlayUrl))
-            okOverlay = DownloadAndReplace(overlayUrl, overlayPath).GetAwaiter().GetResult();
-
-        if (okIndex &amp;&amp; okOverlay)
-        {
-            CPH.SetGlobalVar("overlayHtmlPath", overlayPath, true);
-            CPH.SetGlobalVar("appVersion", version, true);
-            CPH.LogInfo("UpdateAppFiles: ✓ оновлено до версії " + version);
-            return true;
-        }
-
-        CPH.LogError("UpdateAppFiles: оновлення завершилось з помилками (index=" + okIndex + ", overlay=" + okOverlay + ")");
-        return false;
-    }
-
-    private async Task&lt;bool&gt; DownloadAndReplace(string url, string targetPath)
-    {
-        try
-        {
-            using (var http = new HttpClient())
-            {
-                http.Timeout = TimeSpan.FromSeconds(15);
-                http.DefaultRequestHeaders.Add("User-Agent", "StreamerBot-AutoUpdate");
-
-                string newContent = await http.GetStringAsync(url);
-
-                if (string.IsNullOrWhiteSpace(newContent) || newContent.Length &lt; 100)
-                {
-                    CPH.LogError("UpdateAppFiles: завантажений вміст для " + targetPath + " виглядає підозріло коротким — скасовано.");
-                    return false;
-                }
-
-                // Бекап перед заміною
-                if (File.Exists(targetPath))
-                {
-                    string bakPath = targetPath + ".bak";
-                    File.Copy(targetPath, bakPath, overwrite: true);
-                }
-
-                File.WriteAllText(targetPath, newContent);
-                CPH.LogInfo("UpdateAppFiles: записано " + targetPath + " (" + newContent.Length + " chars)");
-                return true;
-            }
-        }
-        catch (Exception ex)
-        {
-            CPH.LogError("UpdateAppFiles: помилка завантаження " + url + " → " + ex.Message);
-            return false;
-        }
-    }
-
-    private string FindFile(string fileName)
-    {
-        string cached = CPH.GetGlobalVar&lt;string&gt;("overlayHtmlPath", true);
-        if (!string.IsNullOrEmpty(cached) &amp;&amp; File.Exists(cached)) return cached;
-
-        try
-        {
-            string sbDir = AppDomain.CurrentDomain.BaseDirectory;
-            var found = SearchForFile(sbDir, fileName, maxDepth: 4);
-            if (found != null) return found;
-        }
-        catch { }
-
-        try
-        {
-            foreach (var drive in DriveInfo.GetDrives().Where(d =&gt; d.IsReady &amp;&amp; d.DriveType == DriveType.Fixed))
-            {
-                var found = SearchForFile(drive.RootDirectory.FullName, fileName, maxDepth: 6);
-                if (found != null) return found;
-            }
-        }
-        catch { }
-
-        return null;
-    }
-
-    private string SearchForFile(string rootDir, string fileName, int maxDepth)
-    {
-        try
-        {
-            var direct = Path.Combine(rootDir, fileName);
-            if (File.Exists(direct)) return direct;
-            if (maxDepth &lt;= 0) return null;
-
-            foreach (var dir in Directory.EnumerateDirectories(rootDir))
-            {
-                string name = Path.GetFileName(dir).ToLowerInvariant();
-                if (name == "windows" || name == "$recycle.bin" || name == "node_modules" ||
-                    name == "program files" || name == "program files (x86)" ||
-                    name.StartsWith("$")) continue;
-
-                var result = SearchForFile(dir, fileName, maxDepth - 1);
-                if (result != null) return result;
-            }
-        }
-        catch { }
-        return null;
-    }
-}</code>
-
             <strong>13. WebSocket Server</strong> — увімкнений (127.0.0.1:8080)<br>
             <strong>12. HTTP Server</strong> — увімкнений (127.0.0.1:7474) + mapping <code>reward</code> → папка з файлами<br>
             <strong>server.js НЕ потрібен</strong> — конфіг оновлюється через WS broadcast живо 🎉
         </details>
-    </div>
-
-    <!-- ОНОВЛЕННЯ З GITHUB -->
-    <div id="updateBanner" class="update-banner">
-        <div class="ub-text">
-            🚀 Доступна нова версія: <strong id="ubNewVersion">—</strong>
-            <span id="ubCurrentVersion" style="color:#8fd9ad"></span>
-            <span id="ubNotes" class="ub-notes"></span>
-        </div>
-        <div class="ub-actions">
-            <button class="ub-apply" id="ubApplyBtn" onclick="applyUpdate()">⬇️ Оновити зараз</button>
-            <button class="ub-dismiss" onclick="dismissUpdateBanner()">Пізніше</button>
-        </div>
     </div>
 
     <div class="grid">
@@ -2307,15 +2130,6 @@ public class CPHInline
 const WS_URL   = 'ws://127.0.0.1:8080/';
 const HTTP_URL = 'http://127.0.0.1:7474';
 
-// Поточна версія застосунку — звіряється з manifest.json у GitHub-репо.
-// При релізі нової версії онови це число ТУТ і в overlay.html, та постав
-// таке саме значення у manifest.json у репозиторії.
-const APP_VERSION = '1.0.3';
-
-// Публічний репозиторій з оновленнями (raw.githubusercontent.com).
-// Підстав свій репозиторій нижче, якщо файли оновлень лежать деінде.
-const UPDATE_MANIFEST_URL = 'https://raw.githubusercontent.com/djesld12q-stack/RewardService/refs/heads/main/manifest.json';
-
 // =====================================================================
 // STATE
 // =====================================================================
@@ -2331,10 +2145,6 @@ let alertsPaused  = localStorage.getItem('alertsPaused')  === 'true';
 let bulkMode     = false;
 const bulkSelected = new Set();
 
-// Оновлення з GitHub
-let updateInfo      = null;  // { version, notes, indexUrl, overlayUrl } з manifest.json
-let updateInProgress = false;
-
 // =====================================================================
 // INIT
 // =====================================================================
@@ -2342,10 +2152,9 @@ document.addEventListener('DOMContentLoaded', () => {
     loadAlerts();
     connectWebSocket();
 
-    // ── Версія / перевірка оновлень ─────────────────────────────
-    const vLabel = document.getElementById('versionLabel');
-    if (vLabel) vLabel.textContent = 'v' + APP_VERSION;
-    setTimeout(() => checkForUpdates({ silent: true }), 2500);
+    // Авто-перевірка оновлень VAM при відкритті адмінки (silent — без тосту, лише банер)
+    setTimeout(() => checkForVamUpdates(true), 1500);
+
 
     // ── Pause toggle ──────────────────────────────────────────
     const pauseToggleEl = document.getElementById('pauseToggle');
@@ -2464,6 +2273,91 @@ function handleMessage(data) {
         // Додаємо в трекер черги
         const matched = alerts.find(a => String(a.rewardId).trim() === String(rewardId).trim());
         if (matched) enqueuePlayback(matched);
+        return;
+    }
+
+    // ── Broadcast від VAM Update Check/Apply (WebsocketBroadcastJson → General/Custom) ──
+    if (data.event?.source === 'General' && data.event?.type === 'Custom') {
+        let inner = data.data;
+        if (typeof inner === 'string') { try { inner = JSON.parse(inner); } catch(_) {} }
+
+        if (inner?.action === 'UpdateStatus') {
+            handleVamUpdateStatus(inner.data || {});
+            return;
+        }
+        if (inner?.action === 'UpdateApplied') {
+            handleVamUpdateApplied(inner.data || {});
+            return;
+        }
+    }
+}
+
+// =====================================================================
+// АВТО-ОНОВЛЕННЯ VAM (index.html / overlay.html з GitHub)
+// =====================================================================
+function checkForVamUpdates(silent) {
+    if (!silent) toast('🔄 Перевіряю оновлення VAM...', 'info');
+
+    fetch(`${HTTP_URL}/DoAction`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            action: { name: 'VAM Update Check', group: '' },
+            args:   { silent: !!silent }
+        }),
+        signal: AbortSignal.timeout(5000)
+    }).catch(() => {});
+}
+
+function applyVamUpdate() {
+    const btn = document.getElementById('updateBannerBtn');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Оновлюю...'; }
+
+    fetch(`${HTTP_URL}/DoAction`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            action: { name: 'VAM Update Apply', group: '' },
+            args:   {}
+        }),
+        signal: AbortSignal.timeout(5000)
+    }).catch(() => {});
+}
+
+function dismissUpdateBanner() {
+    const el = document.getElementById('updateBanner');
+    if (el) el.classList.remove('visible');
+}
+
+function handleVamUpdateStatus(d) {
+    const el   = document.getElementById('updateBanner');
+    const text = document.getElementById('updateBannerText');
+    if (!el || !text) return;
+
+    if (d.error) {
+        console.warn('VAM update check error:', d.error);
+        return;
+    }
+    if (d.updateAvailable) {
+        text.innerHTML = `🆕 Доступна нова версія <strong>${escHtml(d.remoteVersion)}</strong> (зараз: ${escHtml(d.localVersion)})${d.notes ? ' — ' + escHtml(d.notes) : ''}`;
+        el.classList.add('visible');
+    } else {
+        el.classList.remove('visible');
+    }
+}
+
+function handleVamUpdateApplied(d) {
+    const btn  = document.getElementById('updateBannerBtn');
+    const text = document.getElementById('updateBannerText');
+    if (btn) { btn.disabled = false; btn.textContent = '⬆ Оновити'; }
+    if (!text) return;
+
+    if (d.success) {
+        text.textContent = '✅ ' + (d.message || 'Оновлено.');
+        toast('✅ VAM оновлено — онови сторінку (F5)', 'success');
+    } else {
+        text.textContent = '⚠️ ' + (d.message || 'Помилка оновлення.');
+        toast('⚠️ Оновлення не вдалося', 'error');
     }
 }
 
@@ -3747,108 +3641,6 @@ function onDragEnd(e) {
     dragSrcIdx = null;
 }
 
-// =====================================================================
-// ОНОВЛЕННЯ З GITHUB
-// Манiфест manifest.json лежить у публічному репо й містить:
-// { "version": "1.1.0", "notes": "опис змін", "indexUrl": "...", "overlayUrl": "..." }
-// Порівнюємо APP_VERSION з manifest.version (semver), показуємо банер,
-// при натисканні "Оновити" — викликаємо C# Action UpdateAppFiles,
-// яка сама качає нові файли з GitHub і перезаписує index.html/overlay.html на диску.
-// =====================================================================
-
-// Порівняння semver-рядків: повертає true якщо remote новіше за local
-function isNewerVersion(local, remote) {
-    const lp = String(local).split('.').map(n => parseInt(n, 10) || 0);
-    const rp = String(remote).split('.').map(n => parseInt(n, 10) || 0);
-    const len = Math.max(lp.length, rp.length);
-    for (let i = 0; i < len; i++) {
-        const l = lp[i] || 0;
-        const r = rp[i] || 0;
-        if (r > l) return true;
-        if (r < l) return false;
-    }
-    return false;
-}
-
-async function checkForUpdates({ silent = true } = {}) {
-    try {
-        const res = await fetch(UPDATE_MANIFEST_URL + '?t=' + Date.now(), {
-            cache: 'no-store',
-            signal: AbortSignal.timeout(6000)
-        });
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-
-        const manifest = await res.json();
-        if (!manifest || !manifest.version) throw new Error('Невалідний manifest.json');
-
-        if (isNewerVersion(APP_VERSION, manifest.version)) {
-            updateInfo = manifest;
-            showUpdateBanner(manifest);
-            if (!silent) toast(`🚀 Знайдено нову версію ${manifest.version}`, 'success');
-        } else {
-            if (!silent) toast('✅ У вас остання версія', 'success');
-        }
-    } catch (err) {
-        console.warn('checkForUpdates error:', err);
-        if (!silent) toast('⚠️ Не вдалось перевірити оновлення: ' + err.message, 'error');
-    }
-}
-
-function showUpdateBanner(manifest) {
-    const banner = document.getElementById('updateBanner');
-    if (!banner) return;
-
-    document.getElementById('ubNewVersion').textContent     = manifest.version;
-    document.getElementById('ubCurrentVersion').textContent = `(зараз у тебе v${APP_VERSION})`;
-    document.getElementById('ubNotes').textContent           = manifest.notes || '';
-
-    banner.classList.add('show');
-}
-
-function dismissUpdateBanner() {
-    const banner = document.getElementById('updateBanner');
-    if (banner) banner.classList.remove('show');
-}
-
-// Викликає C# Action "UpdateAppFiles" — вона сама завантажує нові
-// index.html / overlay.html з GitHub (raw) і перезаписує файли на диску,
-// зробивши бекап старих версій поруч (index.html.bak / overlay.html.bak).
-async function applyUpdate() {
-    if (!updateInfo || updateInProgress) return;
-
-    updateInProgress = true;
-    const btn = document.getElementById('ubApplyBtn');
-    if (btn) { btn.disabled = true; btn.textContent = '⏳ Оновлюю...'; }
-
-    try {
-        const res = await fetch(`${HTTP_URL}/DoAction`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                action: { name: 'UpdateAppFiles', group: '' },
-                args: {
-                    indexUrl:   updateInfo.indexUrl   || '',
-                    overlayUrl: updateInfo.overlayUrl || '',
-                    version:    updateInfo.version
-                }
-            }),
-            signal: AbortSignal.timeout(20000)
-        });
-
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-
-        toast(`✅ Файли оновлено до v${updateInfo.version}! Онови сторінку (F5) і перезавантаж overlay.html у OBS Browser Source`, 'success');
-        wlog('update', `⬆️ Оновлено до v${updateInfo.version}`);
-
-        if (btn) btn.textContent = '✅ Готово — онови сторінку (F5)';
-    } catch (err) {
-        console.error('applyUpdate error:', err);
-        toast('❌ Не вдалось оновити автоматично: ' + err.message + '. Заміни файли вручну.', 'error');
-        if (btn) { btn.disabled = false; btn.textContent = '⬇️ Оновити зараз'; }
-        updateInProgress = false;
-    }
-}
-
 </script>
 <!-- ============ FOOTER ============ -->
 <footer style="
@@ -3865,27 +3657,6 @@ async function applyUpdate() {
     color: #555;
     border-radius: 0 0 12px 12px;
 ">
-    <span style="display:flex;align-items:center;gap:7px;color:#888">
-        <button onclick="checkForUpdates({ silent: false })" title="Перевірити оновлення на GitHub" style="
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            color: #5be58b;
-            font-weight: 700;
-            padding: 3px 10px;
-            border-radius: 6px;
-            background: rgba(40,167,69,0.1);
-            border: 1px solid rgba(40,167,69,0.25);
-            cursor: pointer;
-            font-size: 1em;
-            transition: all 0.2s;
-        "
-        onmouseover="this.style.background='rgba(40,167,69,0.22)';this.style.borderColor='rgba(40,167,69,0.5)'"
-        onmouseout="this.style.background='rgba(40,167,69,0.1)';this.style.borderColor='rgba(40,167,69,0.25)'">
-            🔄 Перевірити оновлення
-        </button>
-    </span>
-    <span style="color:rgba(255,255,255,0.1)">•</span>
     <span style="display:flex;align-items:center;gap:7px;color:#888">
         Розробник:
         <button onclick="fetch('http://127.0.0.1:7474/DoAction',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:{name:'OpenBrowser',group:''},args:{url:'https://www.twitch.tv/sun69wukong'}})})" style="
