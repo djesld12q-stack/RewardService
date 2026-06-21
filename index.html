@@ -777,8 +777,10 @@
         <div class="update-banner-notes" id="updateNotesText"></div>
         <div class="update-banner-btns">
             <button class="btn-update" id="downloadAllBtn" onclick="downloadAllUpdateFiles()">⬇️ Завантажити оновлення</button>
+            <button class="btn-check-update" id="confirmInstallBtn" onclick="confirmInstalledVersion()" title="Перевіряє реальний файл index.html на диску — підтвердить чи дійсно заміна відбулась">✅ Підтвердити встановлення</button>
             <button class="btn-secondary" onclick="dismissUpdateBanner()">Закрити</button>
         </div>
+        <div id="installCheckResult" style="display:none;margin-top:12px;padding:10px 14px;border-radius:8px;font-size:0.85em;line-height:1.6"></div>
     </div>
 
 
@@ -1975,6 +1977,174 @@ public class CPHInline
     }
 }</code>
 
+            <strong>15. Action "CheckInstalledVersion"</strong> 🔎 — реальна перевірка версії файлів НА ДИСКУ (не покладається на те, що скачалось у Downloads)<br>
+            Sub-action → <code>Execute C# Code</code>. Trigger: нічого (викликається через HTTP кнопкою «🔄 Перевірити оновлення»).<br>
+            <small style="color:#aaa">✨ Шукає <code>index.html</code> тим самим автопошуком, що й <code>WriteOverlayConfig</code> (кеш <code>overlayHtmlPath</code>), витягує з нього рядок <code>const APP_VERSION = '...'</code> і пише результат у файл <code>version-check.json</code> у тій самій теці — звідти його одразу читає адмінка через HTTP (<code>/reward/version-check.json</code>), без globalVar і без WS message-matching. Це підтверджує, що файл на диску дійсно замінено, а не просто скачано в Downloads.</small><br><br>
+            <code style="display:block;white-space:pre;padding:8px;margin:6px 0;background:rgba(0,0,0,0.4);border-radius:6px;overflow-x:auto">using System;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
+
+public class CPHInline
+{
+    public bool Execute()
+    {
+        string indexPath = FindIndexPath();
+
+        if (indexPath == null)
+        {
+            WriteResult(null, null, "index.html не знайдено автоматично. " +
+                        "Передай явний шлях через args['indexPath'] або встанови globalVar 'indexHtmlPath'.");
+            CPH.LogError("CheckInstalledVersion: index.html не знайдено");
+            return false;
+        }
+
+        string html;
+        try
+        {
+            html = File.ReadAllText(indexPath, Encoding.UTF8);
+        }
+        catch (Exception ex)
+        {
+            WriteResult(indexPath, null, "не вдалось прочитати index.html — " + ex.Message);
+            CPH.LogError("CheckInstalledVersion: read error — " + ex.Message);
+            return false;
+        }
+
+        // Шукаємо: const APP_VERSION   = '1.0.0';  (пробіли довільні, лапки ' або ")
+        var m = Regex.Match(html, @"APP_VERSION\s*=\s*['""]([0-9]+(?:\.[0-9]+)*)['""]");
+        if (!m.Success)
+        {
+            WriteResult(indexPath, null, "константу APP_VERSION не знайдено в index.html");
+            CPH.LogError("CheckInstalledVersion: APP_VERSION не знайдено у файлі " + indexPath);
+            return false;
+        }
+
+        string installedVersion = m.Groups[1].Value;
+
+        // Кешуємо шлях, щоб наступного разу не сканувати диск заново
+        CPH.SetGlobalVar("indexHtmlPath", indexPath, true);
+
+        WriteResult(indexPath, installedVersion, null);
+        CPH.LogInfo("CheckInstalledVersion: ✓ на диску встановлена версія " + installedVersion + " (" + indexPath + ")");
+        return true;
+    }
+
+    // Пише version-check.json поряд з index.html (= та сама тека, що мапиться на /reward/)
+    private void WriteResult(string indexPath, string version, string error)
+    {
+        try
+        {
+            string folder = indexPath != null ? Path.GetDirectoryName(indexPath) : FindFallbackFolder();
+            if (folder == null) return;
+
+            string checkedAt = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
+            string json = "{"
+                + "\"installedVersion\":" + (version != null ? "\"" + version + "\"" : "null") + ","
+                + "\"indexPath\":" + (indexPath != null ? "\"" + indexPath.Replace("\\", "\\\\") + "\"" : "null") + ","
+                + "\"checkedAt\":\"" + checkedAt + "\","
+                + "\"error\":" + (error != null ? "\"" + error.Replace("\"", "'") + "\"" : "null")
+                + "}";
+
+            string outPath = Path.Combine(folder, "version-check.json");
+            File.WriteAllText(outPath, json, Encoding.UTF8);
+        }
+        catch (Exception ex)
+        {
+            CPH.LogWarn("CheckInstalledVersion: не вдалось записати version-check.json — " + ex.Message);
+        }
+    }
+
+    private string FindFallbackFolder()
+    {
+        string cached = CPH.GetGlobalVar&lt;string&gt;("overlayHtmlPath", true);
+        if (!string.IsNullOrEmpty(cached) &amp;&amp; File.Exists(cached))
+            return Path.GetDirectoryName(cached);
+        return null;
+    }
+
+    // =====================================================================
+    // Пошук index.html:
+    // 1) явний шлях у args['indexPath']                 (найвищий пріоритет)
+    // 2) кешований шлях у globalVar 'indexHtmlPath'      (якщо валідний)
+    // 3) тека, де вже знайдено overlay.html (globalVar 'overlayHtmlPath')
+    // 4) автопошук відносно теки Streamer.bot
+    // 5) автопошук по всіх локальних дисках (fallback, повільніше)
+    // =====================================================================
+    private string FindIndexPath()
+    {
+        if (args.ContainsKey("indexPath"))
+        {
+            string p = args["indexPath"].ToString();
+            if (File.Exists(p)) return p;
+        }
+
+        string cached = CPH.GetGlobalVar&lt;string&gt;("indexHtmlPath", true);
+        if (!string.IsNullOrEmpty(cached) &amp;&amp; File.Exists(cached))
+        {
+            return cached;
+        }
+
+        // Якщо overlay.html вже знайдено раніше — index.html майже напевно поруч
+        string overlayCached = CPH.GetGlobalVar&lt;string&gt;("overlayHtmlPath", true);
+        if (!string.IsNullOrEmpty(overlayCached) &amp;&amp; File.Exists(overlayCached))
+        {
+            string sibling = Path.Combine(Path.GetDirectoryName(overlayCached), "index.html");
+            if (File.Exists(sibling)) return sibling;
+        }
+
+        try
+        {
+            string sbDir = AppDomain.CurrentDomain.BaseDirectory;
+            var found = SearchForFile(sbDir, "index.html", maxDepth: 4);
+            if (found != null) return found;
+        }
+        catch (Exception ex)
+        {
+            CPH.LogWarn("CheckInstalledVersion: пошук біля SB не вдався — " + ex.Message);
+        }
+
+        try
+        {
+            foreach (var drive in DriveInfo.GetDrives().Where(d =&gt; d.IsReady &amp;&amp; d.DriveType == DriveType.Fixed))
+            {
+                var found = SearchForFile(drive.RootDirectory.FullName, "index.html", maxDepth: 6);
+                if (found != null) return found;
+            }
+        }
+        catch (Exception ex)
+        {
+            CPH.LogWarn("CheckInstalledVersion: повний пошук по дисках не вдався — " + ex.Message);
+        }
+
+        return null;
+    }
+
+    private string SearchForFile(string rootDir, string fileName, int maxDepth)
+    {
+        try
+        {
+            var direct = Path.Combine(rootDir, fileName);
+            if (File.Exists(direct)) return direct;
+            if (maxDepth &lt;= 0) return null;
+
+            foreach (var dir in Directory.EnumerateDirectories(rootDir))
+            {
+                string name = Path.GetFileName(dir).ToLowerInvariant();
+                if (name == "windows" || name == "$recycle.bin" || name == "node_modules" ||
+                    name == "program files" || name == "program files (x86)" ||
+                    name.StartsWith("$")) continue;
+
+                var result = SearchForFile(dir, fileName, maxDepth - 1);
+                if (result != null) return result;
+            }
+        }
+        catch { }
+        return null;
+    }
+}</code>
+
             <strong>13. WebSocket Server</strong> — увімкнений (127.0.0.1:8080)<br>
             <strong>12. HTTP Server</strong> — увімкнений (127.0.0.1:7474) + mapping <code>reward</code> → папка з файлами<br>
             <strong>server.js НЕ потрібен</strong> — конфіг оновлюється через WS broadcast живо 🎉
@@ -2212,7 +2382,7 @@ const WS_URL   = 'ws://127.0.0.1:8080/';
 const HTTP_URL = 'http://127.0.0.1:7474';
 
 // ── Версія застосунку та джерело перевірки оновлень ──────────────────
-const APP_VERSION   = '1.0.1';
+const APP_VERSION   = '1.0.0';
 const MANIFEST_URL  = 'https://raw.githubusercontent.com/djesld12q-stack/RewardService/refs/heads/main/manifest.json';
 
 // =====================================================================
@@ -3546,6 +3716,81 @@ function showUpdateBanner(manifest) {
 function dismissUpdateBanner() {
     const banner = document.getElementById('updateBanner');
     if (banner) banner.classList.remove('show');
+    const resBox = document.getElementById('installCheckResult');
+    if (resBox) { resBox.style.display = 'none'; resBox.textContent = ''; }
+}
+
+// ── Підтвердження встановлення: реальна перевірка файлу на диску ─────
+// Викликає C# Action CheckInstalledVersion → той читає APP_VERSION
+// прямо з index.html на диску і пише version-check.json у тій самій
+// теці (= Static Folder /reward/). Тут читаємо цей файл напряму через
+// HTTP, без globalVar і без WS — так стример точно бачить, чи файл
+// на диску дійсно замінено, а не просто скачано в Downloads.
+async function confirmInstalledVersion() {
+    const btn    = document.getElementById('confirmInstallBtn');
+    const resBox = document.getElementById('installCheckResult');
+    if (!btn || !resBox) return;
+
+    const expectedVersion = latestManifest && latestManifest.version ? latestManifest.version : null;
+
+    btn.disabled = true;
+    btn.textContent = '⏳ Перевірка диска...';
+    resBox.style.display = 'block';
+    resBox.style.background = 'rgba(255,255,255,0.06)';
+    resBox.style.color = '#ccc';
+    resBox.textContent = '⏳ Запускаю CheckInstalledVersion на стороні Streamer.bot...';
+
+    try {
+        // 1. Запускаємо Action — нехай прочитає файл і запише version-check.json
+        await fetch(`${HTTP_URL}/DoAction`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: { name: 'CheckInstalledVersion', group: '' }, args: {} }),
+            signal: AbortSignal.timeout(5000)
+        });
+
+        // 2. Невелика пауза, щоб файл встиг записатись на диск
+        await new Promise(r => setTimeout(r, 1200));
+
+        // 3. Читаємо результат напряму з диска через HTTP (Static Folder /reward/)
+        const res = await fetch(`${HTTP_URL}/reward/version-check.json?_=${Date.now()}`, {
+            cache: 'no-store',
+            signal: AbortSignal.timeout(5000)
+        });
+        if (!res.ok) throw new Error('version-check.json не знайдено (HTTP ' + res.status + ')');
+        const data = await res.json();
+
+        if (data.error) {
+            resBox.style.background = 'rgba(220,53,69,0.15)';
+            resBox.style.color = '#ffb3ba';
+            resBox.textContent = `⚠️ Перевірка не вдалась: ${data.error}`;
+        } else if (!data.installedVersion) {
+            resBox.style.background = 'rgba(220,53,69,0.15)';
+            resBox.style.color = '#ffb3ba';
+            resBox.textContent = '⚠️ Не вдалось визначити версію на диску';
+        } else if (expectedVersion && data.installedVersion === expectedVersion) {
+            resBox.style.background = 'rgba(40,167,69,0.15)';
+            resBox.style.color = '#5be58b';
+            resBox.textContent = `✅ Підтверджено! На диску версія ${data.installedVersion} (${data.indexPath || '?'}). Заміна пройшла успішно.`;
+            toast(`✅ Підтверджено: на диску версія ${data.installedVersion}`, 'success');
+        } else if (expectedVersion && isNewerVersion(expectedVersion, data.installedVersion)) {
+            resBox.style.background = 'rgba(255,193,7,0.15)';
+            resBox.style.color = '#ffd54f';
+            resBox.textContent = `⚠️ На диску досі стара версія ${data.installedVersion} (очікується ${expectedVersion}). Файл index.html ще не замінено — перевірте теку ${data.indexPath || '?'}.`;
+            toast('⚠️ Заміна не відбулась — на диску стара версія', 'error');
+        } else {
+            resBox.style.background = 'rgba(40,167,69,0.15)';
+            resBox.style.color = '#5be58b';
+            resBox.textContent = `✅ На диску версія ${data.installedVersion} (${data.indexPath || '?'}).`;
+        }
+    } catch (err) {
+        resBox.style.background = 'rgba(220,53,69,0.15)';
+        resBox.style.color = '#ffb3ba';
+        resBox.textContent = '⚠️ Не вдалось перевірити — переконайтесь що Action "CheckInstalledVersion" додано в Streamer.bot і HTTP Server увімкнено.';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '✅ Підтвердити встановлення';
+    }
 }
 
 // Скачує всі 3 файли оновлення одним натисканням:
