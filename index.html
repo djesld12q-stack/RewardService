@@ -94,9 +94,9 @@
             margin-bottom: 6px;
         }
 
-        .grid { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 20px; }
+        .grid { display: flex; flex-direction: column; gap: 20px; }
 
-        @media(max-width:800px){ .grid{ grid-template-columns:1fr; } }
+        @media(max-width:800px){ .grid{ flex-direction: column; } }
 
         .card {
             background: rgba(255,255,255,0.05);
@@ -922,6 +922,129 @@
             opacity: 0;
         }
 
+        /* ============ CARD SWAP SYSTEM ============ */
+
+        .grid {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 20px;
+        }
+
+        /* Drag handle strip at top of each card */
+        .card-drag-handle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 14px 8px 12px;
+            margin: -24px -24px 18px -24px;
+            border-radius: 12px 12px 0 0;
+            background: rgba(255,255,255,0.04);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            cursor: grab;
+            user-select: none;
+            transition: background 0.15s;
+        }
+        .card-drag-handle:hover {
+            background: rgba(102,126,234,0.10);
+            border-bottom-color: rgba(102,126,234,0.2);
+        }
+        .card-drag-handle.is-dragging-active {
+            cursor: grabbing;
+            background: rgba(102,126,234,0.15);
+            border-bottom-color: rgba(102,126,234,0.35);
+        }
+        .drag-dots {
+            display: grid;
+            grid-template-columns: repeat(2, 5px);
+            gap: 3px;
+            opacity: 0.3;
+            flex-shrink: 0;
+        }
+        .drag-dots span {
+            width: 5px; height: 5px;
+            border-radius: 50%;
+            background: #fff;
+            display: block;
+        }
+        .card-drag-handle:hover .drag-dots { opacity: 0.7; }
+        .drag-label {
+            font-size: 0.72em;
+            color: #555;
+            font-weight: 600;
+            flex: 1;
+            pointer-events: none;
+        }
+        .card-drag-handle:hover .drag-label { color: #8fa3f5; }
+
+        /* Drop target highlight */
+        .card.drop-target-above {
+            box-shadow: 0 -3px 0 0 rgba(102,126,234,0.7), 0 0 0 1px rgba(102,126,234,0.3);
+        }
+        .card.drop-target-below {
+            box-shadow: 0 3px 0 0 rgba(102,126,234,0.7), 0 0 0 1px rgba(102,126,234,0.3);
+        }
+
+        /* Ghost while dragging */
+        .card.card-ghost {
+            opacity: 0.35;
+            border: 1px dashed rgba(102,126,234,0.5) !important;
+            background: rgba(102,126,234,0.04) !important;
+        }
+
+        /* Save bar */
+        .layout-save-bar {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+            padding: 8px 16px;
+            background: rgba(40,167,69,0.07);
+            border: 1px solid rgba(40,167,69,0.25);
+            border-radius: 10px;
+            animation: fadeInDown 0.25s ease;
+        }
+        .layout-save-bar.visible { display: flex; }
+        @keyframes fadeInDown {
+            from { opacity:0; transform:translateY(-8px); }
+            to   { opacity:1; transform:translateY(0); }
+        }
+        .layout-save-bar span {
+            flex: 1;
+            font-size: 0.82em;
+            color: #5be58b;
+            font-weight: 600;
+        }
+        .btn-save-layout {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 16px;
+            border-radius: 8px;
+            font-size: 0.82em;
+            font-weight: 700;
+            cursor: pointer;
+            border: 1px solid rgba(40,167,69,0.45);
+            background: rgba(40,167,69,0.18);
+            color: #5be58b;
+            transition: all 0.2s;
+        }
+        .btn-save-layout:hover { background: rgba(40,167,69,0.32); }
+        .btn-discard-layout {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.8em;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.05);
+            color: #666;
+            transition: all 0.2s;
+        }
+        .btn-discard-layout:hover { background: rgba(255,255,255,0.1); color: #aaa; }
+
     </style>
 </head>
 <body>
@@ -943,16 +1066,20 @@
 </div>
 <div class="container">
 
-    <div class="header">
+<div class="header">
+    <div style="display:flex; align-items:center; gap:12px;">
+        <img src="https://raw.githubusercontent.com/djesld12q-stack/RewardService/refs/heads/main/BCO.d5919ac7-1813-4c76-83e1-a6c4256770c4.png"
+             style="height:42px; width:auto; flex-shrink:0;" alt="Video Alert Manager">
         <div>
-            <h1>🎬 Video Alert Manager</h1>
+            <h1 style="font-size:1.8em; color:#fff;">Video Alert Manager</h1>
             <p>Налаштування відео-алертів для Twitch Channel Points</p>
         </div>
-        <div id="statusBar" class="status-bar">
-            <div class="status-dot"></div>
-            <span id="statusText">Підключення...</span>
-        </div>
     </div>
+    <div id="statusBar" class="status-bar">
+        <div class="status-dot"></div>
+        <span id="statusText">Підключення...</span>
+    </div>
+</div>
 
     <!-- CHAT MESSAGE TOGGLE -->
     <div class="chat-toggle-bar">
@@ -969,7 +1096,7 @@
         </label>
     </div>
 
-    <!-- ІНСТРУКЦІЯ -->
+    <!-- ІНСТРУКЦІЯ
     <div class="setup-banner">
         <details>
             <summary>⚙️ Потрібне налаштування Streamer.bot (розгорнути)</summary>
@@ -2255,13 +2382,32 @@ public class CPHInline
             <strong>server.js НЕ потрібен</strong> — конфіг оновлюється через WS broadcast живо 🎉
         </details>
     </div>
+    -->
 
-    <div class="grid">
+    <!-- LAYOUT SAVE BAR (появляється після перетягування) -->
+    <div class="layout-save-bar" id="layoutSaveBar">
+        <span>↕ Порядок змінено — зберегти?</span>
+        <button class="btn-save-layout" onclick="saveCardOrder()">💾 Зберегти</button>
+        <button class="btn-discard-layout" onclick="discardCardOrder()">✖ Скасувати</button>
+    </div>
+
+    <div class="grid" id="mainGrid">
 
         <!-- LEFT: Collapsible Form -->
-        <div class="card">
+        <div class="card" id="cardForm">
+            <div class="card-drag-handle" id="dragHandleForm"
+                 onmousedown="startCardDrag(event, 'cardForm')">
+                <div class="drag-dots">
+                    <span></span><span></span><span></span><span></span><span></span><span></span>
+                </div>
+                <span class="drag-label">⠿ Перетягни щоб змінити порядок</span>
+            </div>
             <button class="form-toggle-btn" id="formToggleBtn" onclick="toggleFormPanel()">
-                <span>➕ <span id="formTitle">Додати алерт</span><span id="editingBadge"></span></span>
+                <span>
+    <img src="https://raw.githubusercontent.com/djesld12q-stack/RewardService/refs/heads/main/BCO.0b9ab356-cbff-4af1-9ef6-a668ba3d4855.png"
+         style="height:50px; width:auto; vertical-align:middle;">
+    <span id="formTitle">Додати алерт</span><span id="editingBadge"></span>
+</span>
                 <span class="form-toggle-arrow">▼</span>
             </button>
 
@@ -2386,7 +2532,14 @@ public class CPHInline
         </div>
 
         <!-- RIGHT: Tabbed card -->
-        <div class="card">
+        <div class="card" id="cardList">
+            <div class="card-drag-handle" id="dragHandleList"
+                 onmousedown="startCardDrag(event, 'cardList')">
+                <div class="drag-dots">
+                    <span></span><span></span><span></span><span></span><span></span><span></span>
+                </div>
+                <span class="drag-label">⠿ Перетягни щоб змінити порядок</span>
+            </div>
             <!-- TAB BAR -->
             <div class="tab-bar">
                 <button class="tab-btn active" id="tabBtnAlerts" onclick="switchTab('alerts')">
@@ -2453,13 +2606,13 @@ public class CPHInline
                     <span style="color:#555;font-size:0.75em">або</span>
                     <button class="btn-import" style="font-size:0.78em;padding:5px 10px;opacity:0.7" onclick="document.getElementById('importFile').click()" title="Вибрати файл вручну">📁 з файлу</button>
                     <input type="file" id="importFile" accept=".json" style="display:none" onchange="importFromFile(event)">
-                    <button class="btn-clear-all" onclick="clearAllAlerts()" title="Очистити весь список нагород">🧹 Очистити список</button>
+                    <button class="btn-clear-all" onclick="clearAllAlerts()" title="Очистити весь список нагород">Очистити список</button>
                 </div>
 
                 <!-- Bulk select bar -->
                 <div class="bulk-bar" id="bulkBar">
                     <span class="bulk-bar-count" id="bulkCount">0 вибрано</span>
-                    <button class="btn-danger" style="padding:5px 12px;font-size:0.82em" onclick="bulkDelete()">🗑 Видалити вибрані</button>
+                    <button class="btn-danger" style="padding:5px 12px;font-size:0.82em" onclick="bulkDelete()">🗑</button>
                     <button class="btn-secondary" style="padding:5px 12px;font-size:0.82em" onclick="toggleBulkMode(false)">✖ Скасувати</button>
                 </div>
 
@@ -2472,7 +2625,7 @@ public class CPHInline
                         <button class="search-clear" id="searchClear" onclick="clearSearch()" title="Очистити">✕</button>
                     </div>
                     <button id="btnBulkToggle" onclick="toggleBulkMode(true)" title="Режим множинного вибору"
-                            class="btn-secondary" style="padding:7px 10px;font-size:0.85em;white-space:nowrap;flex-shrink:0">☑ Вибрати</button>
+                            class="btn-secondary" style="padding:7px 10px;font-size:0.85em;white-space:nowrap;flex-shrink:0">Вибрати</button>
                 </div>
 
                 <!-- Queue status -->
@@ -2515,8 +2668,6 @@ public class CPHInline
 
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
                     <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
-                        <button class="btn-secondary" style="padding:4px 10px;font-size:0.76em;flex-shrink:0"
-                                onclick="filterRdmRefunded()" id="rdmFilterRefundedBtn">🔴 Рефандовані</button>
                         <button class="btn-rdm-clear" onclick="clearRedemptionLog()">🗑 Очистити</button>
                     </div>
                 </div>
@@ -2605,7 +2756,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadRedemptionLog();
     connectWebSocket();
     // Polling стартує через 2с (fallback якщо WS не дає подій)
-    setTimeout(startAlertPolling, 2000);
+    setTimeout(startAlertPolling, 6000);
 
     // ── Pause toggle ──────────────────────────────────────────
     const pauseToggleEl = document.getElementById('pauseToggle');
@@ -4450,67 +4601,208 @@ function applyAlertsListState() {
     }
 }
 
+// =====================================================================
+// CARD SWAP SYSTEM — перетягування верх/низ, зберігання в localStorage
+// =====================================================================
+const CARD_ORDER_KEY = 'cardOrder_v1';
+
+let swapDragState = null;
+// { cardId, startY, hasMoved }
+
+function initCardOrder() {
+    const saved = localStorage.getItem(CARD_ORDER_KEY);
+    if (!saved) return;
+    try {
+        const order = JSON.parse(saved); // ['cardForm','cardList'] або навпаки
+        applyCardOrder(order, false);
+    } catch(e) {}
+}
+
+function applyCardOrder(order, animate) {
+    const grid = document.getElementById('mainGrid');
+    if (!grid) return;
+    order.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) grid.appendChild(el);
+    });
+}
+
+function getCardOrder() {
+    const grid = document.getElementById('mainGrid');
+    if (!grid) return ['cardForm','cardList'];
+    return [...grid.querySelectorAll('.card[id]')].map(c => c.id);
+}
+
+// ── Drag start ───────────────────────────────────────────────────────
+function startCardDrag(e, cardId) {
+    const handle = e.currentTarget;
+    handle.classList.add('is-dragging-active');
+
+    swapDragState = {
+        cardId,
+        startY: e.clientY,
+        hasMoved: false,
+        originalOrder: getCardOrder(),
+    };
+
+    document.addEventListener('mousemove', onSwapMouseMove);
+    document.addEventListener('mouseup',   onSwapMouseUp);
+    e.preventDefault();
+}
+
+function onSwapMouseMove(e) {
+    if (!swapDragState) return;
+    const { cardId, startY } = swapDragState;
+    const dy = e.clientY - startY;
+
+    // Потрібно перемістити більше ніж 30px щоб вважалось переміщенням
+    if (Math.abs(dy) < 30) return;
+    swapDragState.hasMoved = true;
+
+    const grid  = document.getElementById('mainGrid');
+    const cards = [...grid.querySelectorAll('.card[id]')];
+    const dragCard  = document.getElementById(cardId);
+    const otherCard = cards.find(c => c.id !== cardId);
+    if (!dragCard || !otherCard) return;
+
+    const dragIdx  = cards.indexOf(dragCard);
+    const otherIdx = cards.indexOf(otherCard);
+
+    // Тягнемо вниз і поточна картка вгорі → помістити внизу
+    if (dy > 0 && dragIdx < otherIdx) {
+        grid.appendChild(dragCard);          // dragCard → після otherCard
+        otherCard.classList.remove('drop-target-above','drop-target-below');
+        otherCard.classList.add('drop-target-above');
+        dragCard.classList.add('card-ghost');
+    }
+    // Тягнемо вгору і поточна картка внизу → помістити вгорі
+    else if (dy < 0 && dragIdx > otherIdx) {
+        grid.insertBefore(dragCard, otherCard); // dragCard → перед otherCard
+        otherCard.classList.remove('drop-target-above','drop-target-below');
+        otherCard.classList.add('drop-target-below');
+        dragCard.classList.add('card-ghost');
+    } else {
+        otherCard.classList.remove('drop-target-above','drop-target-below');
+        dragCard.classList.remove('card-ghost');
+    }
+}
+
+function onSwapMouseUp(e) {
+    if (!swapDragState) return;
+
+    // Прибираємо всі класи
+    document.querySelectorAll('.card-drag-handle').forEach(h => h.classList.remove('is-dragging-active'));
+    document.querySelectorAll('.card').forEach(c => c.classList.remove('card-ghost','drop-target-above','drop-target-below'));
+
+    if (swapDragState.hasMoved) {
+        const newOrder = getCardOrder();
+        const oldOrder = swapDragState.originalOrder;
+        const changed = newOrder.some((id, i) => id !== oldOrder[i]);
+        if (changed) {
+            showSaveBar(newOrder);
+        }
+    }
+
+    swapDragState = null;
+    document.removeEventListener('mousemove', onSwapMouseMove);
+    document.removeEventListener('mouseup',   onSwapMouseUp);
+}
+
+// ── Save bar ─────────────────────────────────────────────────────────
+let pendingOrder = null;
+
+function showSaveBar(order) {
+    pendingOrder = order;
+    const bar = document.getElementById('layoutSaveBar');
+    if (bar) bar.classList.add('visible');
+}
+
+function hideSaveBar() {
+    const bar = document.getElementById('layoutSaveBar');
+    if (bar) bar.classList.remove('visible');
+    pendingOrder = null;
+}
+
+function saveCardOrder() {
+    if (!pendingOrder) pendingOrder = getCardOrder();
+    localStorage.setItem(CARD_ORDER_KEY, JSON.stringify(pendingOrder));
+    hideSaveBar();
+    toast('✅ Порядок збережено', 'success');
+}
+
+function discardCardOrder() {
+    // Повертаємо попередній порядок
+    if (swapDragState && swapDragState.originalOrder) {
+        applyCardOrder(swapDragState.originalOrder, false);
+    } else {
+        // Беремо збережений або дефолт
+        const saved = localStorage.getItem(CARD_ORDER_KEY);
+        const order = saved ? JSON.parse(saved) : ['cardForm','cardList'];
+        applyCardOrder(order, false);
+    }
+    hideSaveBar();
+}
+
+document.addEventListener('DOMContentLoaded', initCardOrder);
+
 </script>
 <!-- ============ FOOTER ============ -->
 <footer style="
-    margin-top: 28px;
-    padding: 14px 24px;
+    max-width: fit-content;
+    margin: 20px auto 0;
+    padding: 10px 85px;
     background: rgba(255,255,255,0.03);
     border-top: 1px solid rgba(255,255,255,0.07);
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 20px;
+    gap: 14px;
     flex-wrap: wrap;
-    font-size: 0.82em;
+    font-size: 0.75em;
     color: #555;
-    border-radius: 0 0 12px 12px;
+    border-radius: 58px;
 ">
-    <span style="display:flex;align-items:center;gap:7px;color:#888">
+    <span style="display:flex;align-items:center;gap:5px;color:#888">
         Розробник:
         <button onclick="fetch('http://127.0.0.1:7474/DoAction',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:{name:'OpenBrowser',group:''},args:{url:'https://www.twitch.tv/sun69wukong'}})})" style="
             display: inline-flex;
             align-items: center;
-            gap: 5px;
+            gap: 4px;
             color: #9147ff;
             font-weight: 700;
-            padding: 3px 10px;
-            border-radius: 6px;
+            padding: 2px 8px;
+            border-radius: 5px;
             background: rgba(145,71,255,0.1);
             border: 1px solid rgba(145,71,255,0.25);
             cursor: pointer;
-            font-size: 1em;
+            font-size: 0.95em;
             transition: all 0.2s;
-        "
-        onmouseover="this.style.background='rgba(145,71,255,0.22)';this.style.borderColor='rgba(145,71,255,0.5)'"
-        onmouseout="this.style.background='rgba(145,71,255,0.1)';this.style.borderColor='rgba(145,71,255,0.25)'">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="#9147ff" xmlns="http://www.w3.org/2000/svg">
-                <path d="M2.149 0L.621 4.062v16.875h5.768V24l4.062-3.063h3.253L21 12.75V0H2.149zM19.5 12l-3.254 3.063h-3.75L9.75 17.812v-2.75H5.438V1.5H19.5V12zM16.688 4.5h-1.5v4.5h1.5V4.5zm-4.125 0h-1.5v4.5h1.5V4.5z"/>
+        " onmouseover="this.style.background='rgba(145,71,255,0.22)';this.style.borderColor='rgba(145,71,255,0.5)'" onmouseout="this.style.background='rgba(145,71,255,0.1)';this.style.borderColor='rgba(145,71,255,0.25)'">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="#9147ff" xmlns="http://www.w3.org/2000/svg">
+                <path d="M2.149 0L.621 4.062v16.875h5.768V24l4.062-3.063h3.253L21 12.75V0H2.149zM19.5 12l-3.254 3.063h-3.75L9.75 17.812v-2.75H5.438V1.5H19.5V12zM16.688 4.5h-1.5v4.5h1.5V4.5zm-4.125 0h-1.5v4.5h1.5V4.5z"></path>
             </svg>
             sun69wukong
         </button>
     </span>
     <span style="color:rgba(255,255,255,0.1)">•</span>
-    <span style="display:flex;align-items:center;gap:7px;color:#888">
+    <span style="display:flex;align-items:center;gap:5px;color:#888">
         Підтримати:
         <button onclick="fetch('http://127.0.0.1:7474/DoAction',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:{name:'OpenBrowser',group:''},args:{url:'https://send.monobank.ua/jar/9Bqrs6GN1V'}})})" style="
             display: inline-flex;
             align-items: center;
-            gap: 5px;
+            gap: 4px;
             color: #1dc07a;
             font-weight: 700;
-            padding: 3px 10px;
-            border-radius: 6px;
+            padding: 2px 8px;
+            border-radius: 5px;
             background: rgba(29,192,122,0.1);
             border: 1px solid rgba(29,192,122,0.25);
             cursor: pointer;
-            font-size: 1em;
+            font-size: 0.95em;
             transition: all 0.2s;
-        "
-        onmouseover="this.style.background='rgba(29,192,122,0.22)';this.style.borderColor='rgba(29,192,122,0.5)'"
-        onmouseout="this.style.background='rgba(29,192,122,0.1)';this.style.borderColor='rgba(29,192,122,0.25)'">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="#1dc07a" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.65 1.87 1.96 0 2.4-.98 2.4-1.59 0-.83-.44-1.61-2.67-2.14-2.48-.6-4.18-1.62-4.18-3.67 0-1.72 1.39-2.84 3.11-3.21V4h2.67v1.95c1.86.45 2.79 1.86 2.85 3.39H14.3c-.05-1.11-.64-1.87-2.22-1.87-1.5 0-2.4.68-2.4 1.64 0 .84.65 1.39 2.67 1.91s4.18 1.39 4.18 3.91c-.01 1.83-1.38 2.83-3.12 3.16z"/>
+        " onmouseover="this.style.background='rgba(29,192,122,0.22)';this.style.borderColor='rgba(29,192,122,0.5)'" onmouseout="this.style.background='rgba(29,192,122,0.1)';this.style.borderColor='rgba(29,192,122,0.25)'">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="#1dc07a" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.65 1.87 1.96 0 2.4-.98 2.4-1.59 0-.83-.44-1.61-2.67-2.14-2.48-.6-4.18-1.62-4.18-3.67 0-1.72 1.39-2.84 3.11-3.21V4h2.67v1.95c1.86.45 2.79 1.86 2.85 3.39H14.3c-.05-1.11-.64-1.87-2.22-1.87-1.5 0-2.4.68-2.4 1.64 0 .84.65 1.39 2.67 1.91s4.18 1.39 4.18 3.91c-.01 1.83-1.38 2.83-3.12 3.16z"></path>
             </svg>
             Моно
         </button>
