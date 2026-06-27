@@ -1,3 +1,123 @@
 ﻿12026-06-27 11:18:08 [INDEX|log] ▶ Тест відправлено: Їсти час !
 2026-06-27 11:18:08 [OVERLAY|alert_start] Їсти час ! | dur=15 | chromo ON
 2026-06-27 11:18:24 [OVERLAY|alert_end] Їсти час !
+2026-06-27 11:24:12 [BROADCAST|chromakey_delegated] хаххаха | filter=Хромакей | source=Нагородитвіч | overlay вмикає сам
+2026-06-27 11:24:12 [BROADCAST|reward_match] хаххаха | rewardId=8683d105-6ab7-49f2-b504-01c60d35b962 | dur=3 | chromo ON | cd=5s
+2026-06-27 11:24:12 [OVERLAY|alert_start] хаххаха | dur=3 | chromo ON
+2026-06-27 11:24:16 [OVERLAY|alert_end] хаххаха
+2026-06-27 11:24:49 [BROADCAST|reward_match] Ха | rewardId=b18bc958-d456-47a9-99b4-1a29c615fc4d | dur=6 | chromo OFF | cd=10s
+2026-06-27 11:24:49 [OVERLAY|alert_start] Ха | dur=6 | chromo OFF
+2026-06-27 11:24:56 [OVERLAY|alert_end] Ха
+2026-06-27 13:54:02 [INDEX|log] ▶ Тест відправлено: Повага!
+2026-06-27 13:54:02 [OVERLAY|alert_start] Повага! | dur=5 | chromo OFF
+2026-06-27 13:54:08 [OVERLAY|alert_end] Повага!
+2026-06-27 13:54:23 [INDEX|log] ✅ Алерт оновлено
+2026-06-27 13:54:23 [INDEX|log] ✅ Конфіг надіслано в Streamer.bot → overlay оновлено
+2026-06-27 13:54:23 [INDEX|config] ⚙️ Синхронізовано (31 алертів)
+2026-06-27 13:54:41 [INDEX|log] ▶ Тест відправлено: Повага!
+2026-06-27 13:54:41 [OVERLAY|alert_start] Повага! | dur=5 | chromo OFF
+2026-06-27 13:54:47 [OVERLAY|alert_end] Повага!
+2026-06-27 13:55:02 [INDEX|log] ✅ Алерт оновлено
+2026-06-27 13:55:02 [INDEX|log] ✅ Конфіг надіслано в Streamer.bot → overlay оновлено
+2026-06-27 13:55:02 [INDEX|config] ⚙️ Синхронізовано (31 алертів)
+2026-06-27 13:55:09 [INDEX|log] ▶ Тест відправлено: Повага!
+2026-06-27 13:55:09 [OVERLAY|alert_start] Повага! | dur=5 | chromo OFF
+2026-06-27 13:55:15 [OVERLAY|alert_end] Повага!
+2026-06-27 13:55:24 [INDEX|log] ✅ Алерт оновлено
+2026-06-27 13:55:24 [INDEX|log] ✅ Конфіг надіслано в Streamer.bot → overlay оновлено
+2026-06-27 13:55:24 [INDEX|config] ⚙️ Синхронізовано (31 алертів)
+2026-06-27 13:55:44 [INDEX|log] ▶ Тест відправлено: Повага!
+2026-06-27 13:55:44 [OVERLAY|alert_start] Повага! | dur=5 | chromo OFF
+2026-06-27 13:55:50 [OVERLAY|alert_end] Повага!
+2026-06-27 14:47:13 [INDEX|log] 🔄 Конфіг автоматично синхронізовано
+2026-06-27 14:47:13 [INDEX|config] ⚙️ Синхронізовано (31 алертів)
+2026-06-27 15:39:53 [INDEX|config] ⚙️ Синхронізовано (31 алертів)
+2026-06-27 15:39:54 [INDEX|log] 🔄 Конфіг автоматично синхронізовано
+2026-06-27 17:50:56 [INDEX|config] ⚙️ Синхронізовано (31 алертів)
+2026-06-27 17:50:56 [INDEX|log] 🔄 Конфіг автоматично синхронізовано
+2026-06-27 17:51:07 [INDEX|log] ▶ Тест відправлено: Ха
+2026-06-27 17:51:07 [OVERLAY|alert_start] Ха | dur=6 | chromo OFF
+2026-06-27 17:51:14 [OVERLAY|alert_end] Ха
+2026-06-27 17:54:52 [INDEX|log] ▶ Тест відправлено: Їсти час !
+2026-06-27 17:54:52 [OVERLAY|alert_start] Їсти час ! | dur=15 | chromo ON
+2026-06-27 17:55:07 [OVERLAY|alert_end] Їсти час !
+2026-06-27 17:58:07 [BROADCAST|chromakey_delegated] Привітання | filter=ФільтрЧорний | source=Нагородитвіч | overlay вмикає сам
+2026-06-27 17:58:07 [OVERLAY|alert_start] Привітання | dur=2 | chromo ON
+2026-06-27 17:58:07 [BROADCAST|reward_match] Привітання | rewardId=cac18c97-4feb-400e-9555-9dc976c9f03e | dur=2 | chromo ON | cd=5s
+2026-06-27 17:58:10 [OVERLAY|alert_end] Привітання
+2026-06-27 18:01:33 [BROADCAST|reward_match] ВАЗАП! | rewardId=6fafc26e-e5ae-4e49-9266-b5f379b1b006 | dur=34 | chromo OFF | cd=35s
+2026-06-27 18:01:33 [OVERLAY|alert_start] ВАЗАП! | dur=34 | chromo OFF
+2026-06-27 18:02:08 [OVERLAY|alert_end] ВАЗАП!
+2026-06-27 20:24:44 [INDEX|config] ⚙️ Синхронізовано (31 алертів)
+2026-06-27 20:24:44 [INDEX|config] ⚙️ Синхронізовано (31 алертів)
+2026-06-27 20:27:23 [BROADCAST|reward_miss] rewardId=0617fc37-0a7c-4911-9db1-ee33dfcbba78 | не знайдено алерту з таким rewardId
+2026-06-27 20:28:04 [INDEX|log] ✅ Відео завантажено успішно
+2026-06-27 20:28:30 [INDEX|log] ✅ Алерт додано
+2026-06-27 20:28:30 [INDEX|log] ✅ Конфіг надіслано в Streamer.bot → overlay оновлено
+2026-06-27 20:28:30 [INDEX|config] ⚙️ Синхронізовано (32 алертів)
+2026-06-27 20:28:35 [BROADCAST|reward_match] Попий води | rewardId=0617fc37-0a7c-4911-9db1-ee33dfcbba78 | dur=4 | chromo OFF
+2026-06-27 20:28:35 [OVERLAY|alert_start] Попий води | dur=4 | chromo OFF
+2026-06-27 20:28:39 [OVERLAY|alert_end] Попий води
+2026-06-27 20:29:41 [BROADCAST|chromakey_delegated] WBRB | filter=Хромакей | source=Нагородитвіч | overlay вмикає сам
+2026-06-27 20:29:41 [BROADCAST|reward_match] WBRB | rewardId=1ffea8bd-6b44-4538-aded-1f6f165aa3a1 | dur=5 | chromo ON | cd=10s
+2026-06-27 20:29:41 [OVERLAY|alert_start] WBRB | dur=5 | chromo ON
+2026-06-27 20:29:47 [OVERLAY|alert_end] WBRB
+2026-06-27 20:32:29 [INDEX|log] ✅ Відео завантажено успішно
+2026-06-27 20:32:39 [INDEX|log] ✅ Алерт оновлено
+2026-06-27 20:32:39 [INDEX|log] ✅ Конфіг надіслано в Streamer.bot → overlay оновлено
+2026-06-27 20:32:39 [INDEX|config] ⚙️ Синхронізовано (32 алертів)
+2026-06-27 20:32:44 [BROADCAST|reward_match] WBRB | rewardId=1ffea8bd-6b44-4538-aded-1f6f165aa3a1 | dur=5 | chromo OFF | cd=10s
+2026-06-27 20:32:44 [OVERLAY|alert_start] WBRB | dur=5 | chromo OFF
+2026-06-27 20:32:49 [OVERLAY|alert_end] WBRB
+2026-06-27 20:32:53 [INDEX|log] ✅ Збережено video-alerts-backup.json поряд з index.html
+2026-06-27 20:34:04 [BROADCAST|reward_match] WBRB | rewardId=1ffea8bd-6b44-4538-aded-1f6f165aa3a1 | dur=5 | chromo OFF | cd=10s
+2026-06-27 20:34:04 [OVERLAY|alert_start] WBRB | dur=5 | chromo OFF
+2026-06-27 20:34:09 [OVERLAY|alert_end] WBRB
+2026-06-27 20:34:14 [INDEX|log] ↩️ Рефанд надіслано: sun69wukong ← «Попий води»
+2026-06-27 20:34:14 [INDEX|log] ↩ Рефанд: sun69wukong | reward=Попий води | rdmId=527142be-cf5e-4c9e-9284-ee951db0210f
+2026-06-27 20:34:14 [INDEX|log] ↩️ Рефанд надіслано: sun69wukong ← «WBRB»
+2026-06-27 20:34:14 [INDEX|log] ↩ Рефанд: sun69wukong | reward=WBRB | rdmId=5ebda3d7-ce78-4111-a561-44c2d06869a3
+2026-06-27 20:34:15 [INDEX|log] ↩️ Рефанд надіслано: sun69wukong ← «WBRB»
+2026-06-27 20:34:15 [INDEX|log] ↩ Рефанд: sun69wukong | reward=WBRB | rdmId=12b14c73-e66a-4f12-bf05-7cf39f07f4e7
+2026-06-27 20:34:16 [INDEX|log] ↩ Рефанд: sun69wukong | reward=WBRB | rdmId=1a70d67a-2fad-4f05-a2c2-f81901cc2ca3
+2026-06-27 20:34:16 [INDEX|log] ↩️ Рефанд надіслано: sun69wukong ← «WBRB»
+2026-06-27 20:35:15 [BROADCAST|chromakey_delegated] хаххаха | filter=Хромакей | source=Нагородитвіч | overlay вмикає сам
+2026-06-27 20:35:15 [BROADCAST|reward_match] хаххаха | rewardId=8683d105-6ab7-49f2-b504-01c60d35b962 | dur=3 | chromo ON | cd=5s
+2026-06-27 20:35:15 [OVERLAY|alert_start] хаххаха | dur=3 | chromo ON
+2026-06-27 20:35:19 [OVERLAY|alert_end] хаххаха
+2026-06-27 20:36:36 [BROADCAST|reward_match] Попий води | rewardId=0617fc37-0a7c-4911-9db1-ee33dfcbba78 | dur=4 | chromo OFF
+2026-06-27 20:36:36 [OVERLAY|alert_start] Попий води | dur=4 | chromo OFF
+2026-06-27 20:36:40 [OVERLAY|alert_end] Попий води
+2026-06-27 20:37:30 [BROADCAST|chromakey_delegated] big Brain | filter=ФільтрЧорний | source=Нагородитвіч | overlay вмикає сам
+2026-06-27 20:37:30 [OVERLAY|alert_start] big Brain | dur=4 | chromo ON
+2026-06-27 20:37:30 [BROADCAST|reward_match] big Brain | rewardId=62862a62-305f-4e54-9ec3-8b50e2ccb841 | dur=4 | chromo ON | cd=10s
+2026-06-27 20:37:35 [OVERLAY|alert_end] big Brain
+2026-06-27 20:37:38 [INDEX|log] ✅ Порядок збережено
+2026-06-27 20:39:09 [BROADCAST|reward_match] WBRB | rewardId=1ffea8bd-6b44-4538-aded-1f6f165aa3a1 | dur=5 | chromo OFF | cd=10s
+2026-06-27 20:39:09 [OVERLAY|alert_start] WBRB | dur=5 | chromo OFF
+2026-06-27 20:39:15 [OVERLAY|alert_end] WBRB
+2026-06-27 20:46:37 [BROADCAST|reward_miss] rewardId=1ea3794f-57e1-4d84-af85-61aac69edb9b | не знайдено алерту з таким rewardId
+2026-06-27 20:47:02 [INDEX|log] ✅ Відео завантажено успішно
+2026-06-27 20:47:26 [INDEX|log] ✅ Алерт додано
+2026-06-27 20:47:26 [INDEX|log] ✅ Конфіг надіслано в Streamer.bot → overlay оновлено
+2026-06-27 20:47:26 [INDEX|config] ⚙️ Синхронізовано (33 алертів)
+2026-06-27 20:47:30 [BROADCAST|reward_match] Емоційний дамаг! | rewardId=1ea3794f-57e1-4d84-af85-61aac69edb9b | dur=3 | chromo OFF | cd=5s
+2026-06-27 20:47:30 [OVERLAY|alert_start] Емоційний дамаг! | dur=3 | chromo OFF
+2026-06-27 20:47:34 [OVERLAY|alert_end] Емоційний дамаг!
+2026-06-27 20:47:56 [INDEX|log] ✅ Алерт оновлено
+2026-06-27 20:47:56 [INDEX|log] ✅ Конфіг надіслано в Streamer.bot → overlay оновлено
+2026-06-27 20:47:56 [INDEX|config] ⚙️ Синхронізовано (33 алертів)
+2026-06-27 20:48:02 [BROADCAST|reward_match] Емоційний дамаг! | rewardId=1ea3794f-57e1-4d84-af85-61aac69edb9b | dur=3 | chromo OFF | cd=5s
+2026-06-27 20:48:02 [OVERLAY|alert_start] Емоційний дамаг! | dur=3 | chromo OFF
+2026-06-27 20:48:06 [OVERLAY|alert_end] Емоційний дамаг!
+2026-06-27 20:48:14 [INDEX|log] ✅ Збережено video-alerts-backup.json поряд з index.html
+2026-06-27 20:52:02 [INDEX|log] 🔄 Конфіг автоматично синхронізовано
+2026-06-27 20:52:02 [INDEX|config] ⚙️ Синхронізовано (33 алертів)
+2026-06-27 20:54:29 [INDEX|config] ⚙️ Синхронізовано (33 алертів)
+2026-06-27 20:54:29 [INDEX|log] 🔄 Конфіг автоматично синхронізовано
+2026-06-27 20:55:41 [INDEX|config] ⚙️ Синхронізовано (33 алертів)
+2026-06-27 20:55:41 [INDEX|log] 🔄 Конфіг автоматично синхронізовано
+2026-06-27 20:55:48 [INDEX|log] ✅ Збережено video-alerts-backup.json поряд з index.html
+2026-06-27 20:57:19 [BROADCAST|reward_match] Емоційний дамаг! | rewardId=1ea3794f-57e1-4d84-af85-61aac69edb9b | dur=3 | chromo OFF | cd=5s
+2026-06-27 20:57:19 [OVERLAY|alert_start] Емоційний дамаг! | dur=3 | chromo OFF
+2026-06-27 20:57:23 [OVERLAY|alert_end] Емоційний дамаг!

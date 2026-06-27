@@ -878,6 +878,49 @@
             opacity: 1;
         }
 
+        /* ============ SORT ORDER BUTTON ============ */
+        .btn-sort-order {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 9px 3px 7px;
+            border-radius: 999px;
+            font-size: 0.72em;
+            font-weight: 700;
+            cursor: pointer;
+            border: 1px solid rgba(102,126,234,0.28);
+            background: rgba(102,126,234,0.08);
+            color: #7e96ee;
+            transition: all 0.18s;
+            white-space: nowrap;
+            flex-shrink: 0;
+            letter-spacing: 0.01em;
+            line-height: 1;
+        }
+        .btn-sort-order .sort-arrow {
+            font-size: 0.9em;
+            transition: transform 0.22s ease;
+            display: inline-block;
+        }
+        .btn-sort-order:hover {
+            background: rgba(102,126,234,0.18);
+            border-color: rgba(102,126,234,0.5);
+            color: #aab8ff;
+        }
+        .btn-sort-order.sort-desc {
+            background: rgba(145,71,255,0.10);
+            border-color: rgba(145,71,255,0.32);
+            color: #a98cee;
+        }
+        .btn-sort-order.sort-desc .sort-arrow {
+            transform: rotate(180deg);
+        }
+        .btn-sort-order.sort-desc:hover {
+            background: rgba(145,71,255,0.20);
+            border-color: rgba(145,71,255,0.55);
+            color: #c4aaff;
+        }
+
         /* ============ ALERTS LIST COLLAPSE TOGGLE ============ */
         .alerts-toggle-btn {
             width: 100%;
@@ -2624,8 +2667,9 @@ public class CPHInline
                                oninput="onSearchInput(this.value)">
                         <button class="search-clear" id="searchClear" onclick="clearSearch()" title="Очистити">✕</button>
                     </div>
+                    <button id="btnSortOrder" class="btn-sort-order" onclick="toggleSortOrder()" title="Змінити порядок відображення"><span class="sort-arrow">↑</span> Старіші</button>
                     <button id="btnBulkToggle" onclick="toggleBulkMode(true)" title="Режим множинного вибору"
-                            class="btn-secondary" style="padding:7px 10px;font-size:0.85em;white-space:nowrap;flex-shrink:0">Вибрати</button>
+                            class="btn-sort-order" style="border-color:rgba(255,255,255,0.18);background:rgba(255,255,255,0.06);color:#888;">☑ Вибрати</button>
                 </div>
 
                 <!-- Queue status -->
@@ -2718,6 +2762,9 @@ let alertsPaused  = localStorage.getItem('alertsPaused')  === 'true';
 let bulkMode     = false;
 const bulkSelected = new Set();
 
+// Sort order: false = oldest first (default), true = newest first
+let sortNewestFirst = localStorage.getItem('alertsSortNewest') === '1';
+
 // Redemption Log
 let redemptionLog = [];
 let rdmSearchQuery = '';
@@ -2804,6 +2851,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Відновлюємо стан списку нагород (shown / hidden)
     applyAlertsListState();
+
+    // Відновлюємо стан кнопки сортування
+    applySortBtnUI();
 
     // Малюємо заливку повзунків відповідно до їх стартового value
     updateAllRangeFills();
@@ -3521,15 +3571,44 @@ function testOverlayPreview() {
 }
 
 // =====================================================================
+// СОРТУВАННЯ АЛЕРТІВ
+// =====================================================================
+function toggleSortOrder() {
+    sortNewestFirst = !sortNewestFirst;
+    localStorage.setItem('alertsSortNewest', sortNewestFirst ? '1' : '0');
+    applySortBtnUI();
+    renderAlerts();
+}
+
+function applySortBtnUI() {
+    const btn = document.getElementById('btnSortOrder');
+    if (!btn) return;
+    const arrow = btn.querySelector('.sort-arrow');
+    if (sortNewestFirst) {
+        if (arrow) arrow.textContent = '↑';
+        btn.childNodes[btn.childNodes.length - 1].textContent = ' Новіші';
+        btn.classList.add('sort-desc');
+        btn.title = 'Зараз: спочатку новіші — натисни щоб показати старіші';
+    } else {
+        if (arrow) arrow.textContent = '↑';
+        btn.childNodes[btn.childNodes.length - 1].textContent = ' Старіші';
+        btn.classList.remove('sort-desc');
+        btn.title = 'Зараз: спочатку старіші — натисни щоб показати новіші';
+    }
+}
+
+// =====================================================================
 // РЕНДЕР АЛЕРТІВ
 // =====================================================================
 function getFilteredAlerts() {
     const q = (searchQuery || '').toLowerCase().trim();
-    if (!q) return alerts;
-    return alerts.filter(a =>
-        (a.name || '').toLowerCase().includes(q) ||
-        (a.rewardId || '').toLowerCase().includes(q)
-    );
+    let result = q
+        ? alerts.filter(a =>
+            (a.name || '').toLowerCase().includes(q) ||
+            (a.rewardId || '').toLowerCase().includes(q))
+        : [...alerts];
+    if (sortNewestFirst) result = result.slice().reverse();
+    return result;
 }
 
 function renderAlerts() {
