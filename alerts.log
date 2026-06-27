@@ -1,0 +1,23 @@
+﻿2026-06-26 22:20:25 [BROADCAST|chromakey_delegated] WBRB | filter=Хромакей | source=Нагородитвіч | overlay вмикає сам
+2026-06-26 22:20:25 [BROADCAST|reward_match] WBRB | rewardId=1ffea8bd-6b44-4538-aded-1f6f165aa3a1 | dur=5 | chromo ON | cd=10s
+2026-06-26 22:20:25 [OVERLAY|alert_start] WBRB | dur=5 | chromo ON
+2026-06-26 22:20:28 [INDEX|log] ↩️ Рефанд надіслано: escanor_steam ← «WBRB»
+2026-06-26 22:20:28 [INDEX|log] ↩ Рефанд: escanor_steam | reward=WBRB | rdmId=46b42c63-9b2b-4c61-95f4-7599e988561e
+2026-06-26 22:20:29 [INDEX|log] ↩️ Рефанд надіслано: escanor_steam ← «WBRB»
+2026-06-26 22:20:29 [INDEX|log] ↩ Рефанд: escanor_steam | reward=WBRB | rdmId=58b63014-8092-45fa-b3fa-5fdc9e85ba30
+2026-06-26 22:20:30 [OVERLAY|alert_end] WBRB
+2026-06-26 22:23:24 [BROADCAST|chromakey_delegated] хаххаха | filter=Хромакей | source=Нагородитвіч | overlay вмикає сам
+2026-06-26 22:23:24 [BROADCAST|reward_match] хаххаха | rewardId=8683d105-6ab7-49f2-b504-01c60d35b962 | dur=3 | chromo ON | cd=5s
+2026-06-26 22:23:24 [OVERLAY|alert_start] хаххаха | dur=3 | chromo ON
+2026-06-26 22:23:28 [OVERLAY|alert_end] хаххаха
+2026-06-26 22:23:33 [INDEX|log] ↩️ Рефанд надіслано: sun69wukong ← «хаххаха»
+2026-06-26 22:23:33 [INDEX|log] ↩ Рефанд: sun69wukong | reward=хаххаха | rdmId=3727cc7d-0833-42cf-843b-e0811290b712
+2026-06-26 22:28:03 [BROADCAST|reward_match] Ха | rewardId=b18bc958-d456-47a9-99b4-1a29c615fc4d | dur=6 | chromo OFF | cd=10s
+2026-06-26 22:28:03 [OVERLAY|alert_start] Ха | dur=6 | chromo OFF
+2026-06-26 22:28:10 [OVERLAY|alert_end] Ха
+2026-06-26 22:28:10 [INDEX|log] ↩️ Рефанд надіслано: allyeah_ua ← «Ха»
+2026-06-26 22:28:10 [INDEX|log] ↩ Рефанд: allyeah_ua | reward=Ха | rdmId=050f848c-2a0e-44f3-92cd-8b1522b34639
+2026-06-26 22:31:20 [INDEX|config] ⚙️ Синхронізовано (31 алертів)
+2026-06-26 22:31:20 [INDEX|log] 🔄 Конфіг автоматично синхронізовано
+2026-06-27 09:27:50 [INDEX|config] ⚙️ Синхронізовано (31 алертів)
+2026-06-27 09:27:50 [INDEX|log] 🔄 Конфіг автоматично синхронізовано

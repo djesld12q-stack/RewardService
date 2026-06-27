@@ -3,13 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Заборона кешування — щоб OBS Browser Source / CEF завжди тягнув свіжу версію
-         файлу з диска, а не стару закешовану відповідь за тим самим URL. Браузерний
-         кеш інколи ігнорує HTTP Cache-Control від локального сервера Streamer.bot,
-         тому дублюємо заборону тут, на рівні самого документа. -->
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
     <title>Video Alert Manager</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -40,21 +33,6 @@
 
         .header h1 { font-size: 1.8em; color: #fff; }
         .header p { color: #aaa; font-size: 0.9em; margin-top: 4px; }
-
-        .app-version-badge {
-            display: inline-block;
-            vertical-align: middle;
-            margin-left: 10px;
-            font-size: 0.4em;
-            font-weight: 700;
-            font-family: monospace;
-            color: #8fa3f5;
-            background: rgba(102,126,234,0.15);
-            border: 1px solid rgba(102,126,234,0.3);
-            padding: 3px 10px;
-            border-radius: 20px;
-            letter-spacing: 0.5px;
-        }
 
         .status-bar {
             display: flex;
@@ -107,82 +85,6 @@
             font-family: monospace;
             font-size: 0.95em;
         }
-
-        /* ============ UPDATE BANNER ============ */
-        .update-banner {
-            display: none;
-            background: rgba(220,53,69,0.12);
-            border: 1px solid rgba(220,53,69,0.35);
-            border-radius: 10px;
-            padding: 18px 20px;
-            margin-bottom: 20px;
-            color: #ffb3ba;
-        }
-        .update-banner.show { display: block; }
-        .update-banner-head {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-bottom: 10px;
-        }
-        .update-banner-title {
-            font-weight: 700;
-            font-size: 1.05em;
-            color: #ff8a95;
-        }
-        .update-banner-ver {
-            font-size: 0.8em;
-            background: rgba(0,0,0,0.3);
-            padding: 2px 9px;
-            border-radius: 20px;
-            color: #ffd6d9;
-            font-family: monospace;
-        }
-        .update-banner-notes {
-            font-size: 0.88em;
-            line-height: 1.6;
-            color: #ffd6d9;
-            margin-bottom: 14px;
-            white-space: pre-wrap;
-        }
-        .update-banner-btns {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        .update-banner-btns button {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .btn-update {
-            background: linear-gradient(135deg,#dc3545,#a51c2c);
-            color: #fff;
-        }
-        .btn-update:hover { opacity: 0.88; transform: translateY(-1px); }
-
-        .btn-check-update {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 0.85em;
-            font-weight: 600;
-            background: rgba(255,255,255,0.08);
-            border: 1px solid rgba(255,255,255,0.15);
-            color: #ccc;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .btn-check-update:hover { background: rgba(255,255,255,0.15); }
-        .btn-check-update.checking .upd-spin {
-            display: inline-block;
-            animation: spin 0.9s linear infinite;
-        }
-        @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
-        .btn-check-update.up-to-date { color: #5be58b; border-color: rgba(40,167,69,0.3); }
 
         details summary {
             cursor: pointer;
@@ -739,6 +641,287 @@
         .chat-toggle-bar.compact .chat-toggle-label small { font-size: 0.7em; }
         .chat-toggle-bar.compact .chat-status-badge { font-size: 0.68em; padding: 2px 7px; }
 
+        /* ============ REDEMPTION LOG ============ */
+        .rdm-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin-top: 20px;
+        }
+        .rdm-card h2 {
+            font-size: 1.05em;
+            color: #fff;
+            margin-bottom: 14px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .rdm-header-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .rdm-count-badge {
+            background: rgba(145,71,255,0.15);
+            color: #b08cff;
+            border: 1px solid rgba(145,71,255,0.3);
+            border-radius: 10px;
+            padding: 2px 10px;
+            font-size: 0.75em;
+            font-weight: 700;
+        }
+        .btn-rdm-clear {
+            background: rgba(255,255,255,0.07);
+            color: #888;
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 6px;
+            padding: 4px 10px;
+            font-size: 0.75em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-rdm-clear:hover { background: rgba(255,255,255,0.13); color: #ccc; }
+
+        .rdm-filters {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .rdm-search-wrap { position: relative; flex: 1; min-width: 140px; }
+        .rdm-search {
+            width: 100%; padding: 7px 30px 7px 12px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 7px; color: #eee; font-size: 0.83em;
+        }
+        .rdm-search:focus { outline: none; border-color: #9147ff; background: rgba(145,71,255,0.07); }
+        .rdm-search::placeholder { color: #555; }
+        .rdm-search-clear {
+            position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+            background: none; border: none; color: #555; cursor: pointer; font-size: 0.9em;
+            padding: 2px; display: none;
+        }
+        .rdm-search-clear.visible { display: block; }
+        .rdm-search-clear:hover { color: #aaa; }
+
+        .rdm-list {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+            max-height: 380px;
+            overflow-y: auto;
+            padding-right: 2px;
+        }
+        .rdm-list::-webkit-scrollbar { width: 4px; }
+        .rdm-list::-webkit-scrollbar-track { background: rgba(255,255,255,0.03); border-radius: 2px; }
+        .rdm-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 2px; }
+
+        .rdm-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 12px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 8px;
+            transition: border-color 0.15s;
+            min-width: 0;
+        }
+        .rdm-item:hover { border-color: rgba(145,71,255,0.25); }
+        .rdm-item.refunded {
+            opacity: 0.45;
+            border-color: rgba(255,255,255,0.05) !important;
+        }
+        .rdm-item.refunded .rdm-item-name { text-decoration: line-through; color: #666; }
+
+        .rdm-item-info { flex: 1; min-width: 0; }
+        .rdm-item-name {
+            font-weight: 600; font-size: 0.88em; color: #eee;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .rdm-item-meta {
+            font-size: 0.75em; color: #666; margin-top: 2px;
+            display: flex; gap: 8px; flex-wrap: wrap;
+        }
+        .rdm-item-user { color: #9147ff; font-weight: 600; }
+        .rdm-item-time { color: #555; }
+        .rdm-item-reward { color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px; }
+
+        .btn-refund {
+            background: rgba(255,107,122,0.12);
+            color: #ff8a95;
+            border: 1px solid rgba(220,53,69,0.25);
+            border-radius: 6px;
+            padding: 4px 10px;
+            font-size: 0.75em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+        .btn-refund:hover { background: rgba(220,53,69,0.28); border-color: rgba(220,53,69,0.5); }
+        .btn-refund:disabled {
+            opacity: 0.4; cursor: default;
+            background: rgba(255,255,255,0.04);
+            color: #555; border-color: rgba(255,255,255,0.08);
+        }
+        .rdm-refunded-badge {
+            font-size: 0.7em; font-weight: 700;
+            color: #666; padding: 2px 7px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 5px; flex-shrink: 0;
+        }
+
+        .rdm-empty {
+            text-align: center; padding: 28px 16px; color: #444;
+            font-size: 0.85em;
+        }
+        .rdm-empty-icon { font-size: 2em; margin-bottom: 8px; }
+
+
+        /* ============ TABS ============ */
+        .tab-bar {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 18px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+            padding: 4px;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 7px;
+            font-size: 0.88em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.18s;
+            background: transparent;
+            color: #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+        .tab-btn:hover { color: #aaa; background: rgba(255,255,255,0.05); }
+        .tab-btn.active {
+            background: rgba(102,126,234,0.18);
+            color: #8fa3f5;
+            border: 1px solid rgba(102,126,234,0.3);
+        }
+        .tab-btn.active.tab-log {
+            background: rgba(145,71,255,0.15);
+            color: #b08cff;
+            border-color: rgba(145,71,255,0.3);
+        }
+        .tab-badge {
+            background: rgba(145,71,255,0.25);
+            color: #b08cff;
+            border-radius: 8px;
+            padding: 1px 6px;
+            font-size: 0.8em;
+            font-weight: 700;
+        }
+        .tab-btn.active .tab-badge {
+            background: rgba(145,71,255,0.35);
+        }
+        .tab-pane { display: none; }
+        .tab-pane.active { display: block; }
+
+
+        /* ============ COLLAPSIBLE FORM ============ */
+        .form-toggle-btn {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #fff;
+            font-size: 1.1em;
+            font-weight: 700;
+            text-align: left;
+            gap: 8px;
+        }
+        .form-toggle-btn:hover { color: #8fa3f5; }
+        .form-toggle-arrow {
+            font-size: 0.75em;
+            color: #555;
+            transition: transform 0.22s ease;
+            flex-shrink: 0;
+        }
+        .form-toggle-btn.open .form-toggle-arrow { transform: rotate(180deg); color: #8fa3f5; }
+        .form-collapsible {
+            overflow: hidden;
+            max-height: 0;
+            transition: max-height 0.3s ease, opacity 0.2s ease;
+            opacity: 0;
+        }
+        .form-collapsible.open {
+            max-height: 2400px;
+            opacity: 1;
+        }
+
+        /* ============ ALERTS LIST COLLAPSE TOGGLE ============ */
+        .alerts-toggle-btn {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            cursor: pointer;
+            color: #aaa;
+            font-size: 0.85em;
+            font-weight: 600;
+            transition: all 0.2s;
+            margin-bottom: 8px;
+            text-align: left;
+            gap: 8px;
+        }
+        .alerts-toggle-btn:hover {
+            background: rgba(255,255,255,0.09);
+            color: #fff;
+            border-color: rgba(255,255,255,0.22);
+        }
+        .alerts-toggle-btn .atb-arrow {
+            transition: transform 0.22s ease;
+            font-size: 0.8em;
+            color: #555;
+            flex-shrink: 0;
+        }
+        .alerts-toggle-btn.atb-collapsed .atb-arrow {
+            transform: rotate(-90deg);
+        }
+        #alertsListWrapper {
+            overflow: hidden;
+            transition: max-height 0.32s ease, opacity 0.22s ease;
+            max-height: 99999px;
+            opacity: 1;
+        }
+        #alertsListWrapper.atb-collapsed {
+            max-height: 0;
+            opacity: 0;
+        }
+
     </style>
 </head>
 <body>
@@ -762,33 +945,14 @@
 
     <div class="header">
         <div>
-            <h1>🎬 Video Alert Manager <span class="app-version-badge" id="appVersionBadge">v1.0.2</span></h1>
+            <h1>🎬 Video Alert Manager</h1>
             <p>Налаштування відео-алертів для Twitch Channel Points</p>
         </div>
         <div id="statusBar" class="status-bar">
             <div class="status-dot"></div>
             <span id="statusText">Підключення...</span>
         </div>
-        <button id="checkUpdateBtn" class="btn-check-update" onclick="checkForUpdate()" title="Перевірити чи є нова версія на GitHub">
-            <span class="upd-spin">🔄</span> <span id="checkUpdateBtnText">Перевірити оновлення</span>
-        </button>
     </div>
-
-    <!-- UPDATE BANNER -->
-    <div class="update-banner" id="updateBanner">
-        <div class="update-banner-head">
-            <span style="font-size:1.3em">⚠️</span>
-            <span class="update-banner-title">Доступне оновлення!</span>
-            <span class="update-banner-ver" id="updateVerText"></span>
-        </div>
-        <div class="update-banner-notes" id="updateNotesText"></div>
-        <div class="update-banner-btns">
-            <button class="btn-update" id="installUpdateBtn" onclick="installUpdateAutomatically()" title="Сама качає нові файли з GitHub і записує їх в робочу теку — без Downloads">🚀 Встановити оновлення автоматично</button>
-            <button class="btn-secondary" onclick="dismissUpdateBanner()">Закрити</button>
-        </div>
-        <div id="installCheckResult" style="display:none;margin-top:12px;padding:10px 14px;border-radius:8px;font-size:0.85em;line-height:1.6"></div>
-    </div>
-
 
     <!-- CHAT MESSAGE TOGGLE -->
     <div class="chat-toggle-bar">
@@ -808,7 +972,7 @@
     <!-- ІНСТРУКЦІЯ -->
     <div class="setup-banner">
         <details>
-            <summary>⚙️ Потрібне налаштування Streamer.bot (розгорнути) ⚙️</summary>
+            <summary>⚙️ Потрібне налаштування Streamer.bot (розгорнути)</summary>
             <br>
             <button
                 id="copyOverlayBtn"
@@ -1053,12 +1217,28 @@ public class CPHInline
                 WLog("chromakey_delegated", name + " | filter=" + obsFilter + " | source=" + obsSource + " | overlay вмикає сам");
             }
 
+            // Отримуємо redemptionId — справжній Twitch UUID цієї активації.
+            // SB передає його автоматично при тригері Channel Point Reward Redeemed.
+            string redemptionId = "";
+            if (args.ContainsKey("redemptionId")) redemptionId = args["redemptionId"].ToString();
+            else if (args.ContainsKey("msgId"))   redemptionId = args["msgId"].ToString();
+
+            // Перевіряємо чи отримали справжній Twitch UUID (36 символів, xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)
+            // Якщо ні — генеруємо фейковий; index.html побачить це через Guid.TryParse і заблокує API-рефанд
+            bool hasRealRedemptionId = !string.IsNullOrEmpty(redemptionId) &amp;&amp; Guid.TryParse(redemptionId, out _);
+            if (!hasRealRedemptionId)
+            {
+                redemptionId = rewardId + "_" + DateTime.UtcNow.Ticks.ToString();
+                WLog("fake_rdm_id", name + " | SB не передав redemptionId, згенеровано фейковий: " + redemptionId);
+            }
+
             string payload = "{\"action\":\"VideoAlert\",\"data\":{"
                 + "\"videoUrl\":\""  + J(videoUrl)  + "\","
                 + "\"mediaType\":\""+ (string.IsNullOrEmpty(mediaType) ? "video" : J(mediaType)) + "\","
                 + "\"duration\":"   + duration      + ","
                 + "\"name\":\""     + J(name)       + "\","
                 + "\"rewardId\":\"" + J(rewardId)   + "\","
+                + "\"redemptionId\":\"" + J(redemptionId) + "\","
                 + "\"chromakey\":"  + (chromakey ? "true" : "false") + ","
                 + "\"showTimer\":"  + (showTimer  ? "true" : "false") + ","
                 + "\"positionPreset\":\"" + J(posPreset) + "\","
@@ -1072,6 +1252,22 @@ public class CPHInline
                 + "}}";
 
             CPH.WebsocketBroadcastJson(payload);
+
+            // Записуємо останню активацію у last-alert.json для polling з index.html
+            // (файл лежить поряд з index.html і доступний через HTTP маппінг /reward/)
+            try
+            {
+                string alertJson = "{\"rewardId\":\"" + J(rewardId) + "\","
+                    + "\"redemptionId\":\"" + J(redemptionId) + "\","
+                    + "\"name\":\""     + J(name)     + "\","
+                    + "\"userName\":\"" + J(userName) + "\","
+                    + "\"ts\":\""      + DateTime.UtcNow.ToString("o") + "\"}";
+                string alertDir = Path.GetDirectoryName(FindLogPath());
+                if (!string.IsNullOrEmpty(alertDir))
+                    File.WriteAllText(Path.Combine(alertDir, "last-alert.json"), alertJson, Encoding.UTF8);
+            }
+            catch { }
+
             WLog("reward_match", name + " | rewardId=" + rewardId + " | dur=" + duration + " | chromo " + (chromakey ? "ON" : "OFF") + (cooldown &gt; 0 ? " | cd=" + cooldown + "s" : ""));
 
             if (!string.IsNullOrEmpty(userName)) {
@@ -1983,387 +2179,76 @@ public class CPHInline
     }
 }</code>
 
-            <strong>15. Action "CheckInstalledVersion"</strong> 🔎 — реальна перевірка версії файлів НА ДИСКУ (не покладається на те, що скачалось у Downloads)<br>
-            Sub-action → <code>Execute C# Code</code>. Trigger: нічого (викликається через HTTP кнопкою «🔄 Перевірити оновлення»).<br>
-            <small style="color:#aaa">✨ Шукає <code>index.html</code> тим самим автопошуком, що й <code>WriteOverlayConfig</code> (кеш <code>overlayHtmlPath</code>), витягує з нього рядок <code>const APP_VERSION = '...'</code> і пише результат у файл <code>version-check.json</code> у тій самій теці — звідти його одразу читає адмінка через HTTP (<code>/reward/version-check.json</code>), без globalVar і без WS message-matching. Це підтверджує, що файл на диску дійсно замінено, а не просто скачано в Downloads.</small><br><br>
+            <strong>15. Action "RefundChannelPoints"</strong> 💸 — повертає поінти користувачу через Twitch API<br>
+            Sub-action → <code>Execute C# Code</code>. Trigger: нічого (викликається через HTTP з index.html при натисканні кнопки Рефанд).<br>
+            <small style="color:#aaa">💡 Отримує <code>rewardId</code>, <code>userName</code>, <code>redemptionId</code> з index.html і скасовує активацію через Streamer.bot Twitch API.</small><br><br>
             <code style="display:block;white-space:pre;padding:8px;margin:6px 0;background:rgba(0,0,0,0.4);border-radius:6px;overflow-x:auto">using System;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
 
 public class CPHInline
 {
     public bool Execute()
     {
-        string indexPath = FindIndexPath();
+        // Дані що передає index.html при натисканні кнопки "💸 Рефанд"
+        string rewardId     = args.ContainsKey("rewardId")     ? args["rewardId"].ToString()     : "";
+        string userName     = args.ContainsKey("userName")     ? args["userName"].ToString()     : "";
+        string redemptionId = args.ContainsKey("redemptionId") ? args["redemptionId"].ToString() : "";
 
-        if (indexPath == null)
+        if (string.IsNullOrEmpty(rewardId))
         {
-            WriteResult(null, null, "index.html не знайдено автоматично. " +
-                        "Передай явний шлях через args['indexPath'] або встанови globalVar 'indexHtmlPath'.");
-            CPH.LogError("CheckInstalledVersion: index.html не знайдено");
-            return false;
-        }
-
-        string html;
-        try
-        {
-            html = File.ReadAllText(indexPath, Encoding.UTF8);
-        }
-        catch (Exception ex)
-        {
-            WriteResult(indexPath, null, "не вдалось прочитати index.html — " + ex.Message);
-            CPH.LogError("CheckInstalledVersion: read error — " + ex.Message);
-            return false;
-        }
-
-        // Шукаємо: const APP_VERSION   = '1.0.0';  (пробіли довільні, лапки ' або ")
-        var m = Regex.Match(html, @"APP_VERSION\s*=\s*['""]([0-9]+(?:\.[0-9]+)*)['""]");
-        if (!m.Success)
-        {
-            WriteResult(indexPath, null, "константу APP_VERSION не знайдено в index.html");
-            CPH.LogError("CheckInstalledVersion: APP_VERSION не знайдено у файлі " + indexPath);
-            return false;
-        }
-
-        string installedVersion = m.Groups[1].Value;
-
-        // Кешуємо шлях, щоб наступного разу не сканувати диск заново
-        CPH.SetGlobalVar("indexHtmlPath", indexPath, true);
-
-        WriteResult(indexPath, installedVersion, null);
-        CPH.LogInfo("CheckInstalledVersion: ✓ на диску встановлена версія " + installedVersion + " (" + indexPath + ")");
-        return true;
-    }
-
-    // Пише version-check.json поряд з index.html (= та сама тека, що мапиться на /reward/)
-    private void WriteResult(string indexPath, string version, string error)
-    {
-        try
-        {
-            string folder = indexPath != null ? Path.GetDirectoryName(indexPath) : FindFallbackFolder();
-            if (folder == null) return;
-
-            string checkedAt = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
-            string json = "{"
-                + "\"installedVersion\":" + (version != null ? "\"" + version + "\"" : "null") + ","
-                + "\"indexPath\":" + (indexPath != null ? "\"" + indexPath.Replace("\\", "\\\\") + "\"" : "null") + ","
-                + "\"checkedAt\":\"" + checkedAt + "\","
-                + "\"error\":" + (error != null ? "\"" + error.Replace("\"", "'") + "\"" : "null")
-                + "}";
-
-            string outPath = Path.Combine(folder, "version-check.json");
-            File.WriteAllText(outPath, json, Encoding.UTF8);
-        }
-        catch (Exception ex)
-        {
-            CPH.LogWarn("CheckInstalledVersion: не вдалось записати version-check.json — " + ex.Message);
-        }
-    }
-
-    private string FindFallbackFolder()
-    {
-        string cached = CPH.GetGlobalVar&lt;string&gt;("overlayHtmlPath", true);
-        if (!string.IsNullOrEmpty(cached) &amp;&amp; File.Exists(cached))
-            return Path.GetDirectoryName(cached);
-        return null;
-    }
-
-    // =====================================================================
-    // Пошук index.html:
-    // 1) явний шлях у args['indexPath']                 (найвищий пріоритет)
-    // 2) кешований шлях у globalVar 'indexHtmlPath'      (якщо валідний)
-    // 3) тека, де вже знайдено overlay.html (globalVar 'overlayHtmlPath')
-    // 4) автопошук відносно теки Streamer.bot
-    // 5) автопошук по всіх локальних дисках (fallback, повільніше)
-    // =====================================================================
-    private string FindIndexPath()
-    {
-        if (args.ContainsKey("indexPath"))
-        {
-            string p = args["indexPath"].ToString();
-            if (File.Exists(p)) return p;
-        }
-
-        string cached = CPH.GetGlobalVar&lt;string&gt;("indexHtmlPath", true);
-        if (!string.IsNullOrEmpty(cached) &amp;&amp; File.Exists(cached))
-        {
-            return cached;
-        }
-
-        // Якщо overlay.html вже знайдено раніше — index.html майже напевно поруч
-        string overlayCached = CPH.GetGlobalVar&lt;string&gt;("overlayHtmlPath", true);
-        if (!string.IsNullOrEmpty(overlayCached) &amp;&amp; File.Exists(overlayCached))
-        {
-            string sibling = Path.Combine(Path.GetDirectoryName(overlayCached), "index.html");
-            if (File.Exists(sibling)) return sibling;
-        }
-
-        try
-        {
-            string sbDir = AppDomain.CurrentDomain.BaseDirectory;
-            var found = SearchForFile(sbDir, "index.html", maxDepth: 4);
-            if (found != null) return found;
-        }
-        catch (Exception ex)
-        {
-            CPH.LogWarn("CheckInstalledVersion: пошук біля SB не вдався — " + ex.Message);
-        }
-
-        try
-        {
-            foreach (var drive in DriveInfo.GetDrives().Where(d =&gt; d.IsReady &amp;&amp; d.DriveType == DriveType.Fixed))
-            {
-                var found = SearchForFile(drive.RootDirectory.FullName, "index.html", maxDepth: 6);
-                if (found != null) return found;
-            }
-        }
-        catch (Exception ex)
-        {
-            CPH.LogWarn("CheckInstalledVersion: повний пошук по дисках не вдався — " + ex.Message);
-        }
-
-        return null;
-    }
-
-    private string SearchForFile(string rootDir, string fileName, int maxDepth)
-    {
-        try
-        {
-            var direct = Path.Combine(rootDir, fileName);
-            if (File.Exists(direct)) return direct;
-            if (maxDepth &lt;= 0) return null;
-
-            foreach (var dir in Directory.EnumerateDirectories(rootDir))
-            {
-                string name = Path.GetFileName(dir).ToLowerInvariant();
-                if (name == "windows" || name == "$recycle.bin" || name == "node_modules" ||
-                    name == "program files" || name == "program files (x86)" ||
-                    name.StartsWith("$")) continue;
-
-                var result = SearchForFile(dir, fileName, maxDepth - 1);
-                if (result != null) return result;
-            }
-        }
-        catch { }
-        return null;
-    }
-}</code>
-
-            <strong>16. Action "InstallUpdate"</strong> 🚀 — повністю автоматичне оновлення: качає index.html / overlay.html / manifest.json з GitHub і записує ЇХ ПРЯМО в робочу теку на диску (без Downloads, без ручного копіювання)<br>
-            Sub-action → <code>Execute C# Code</code>. Trigger: нічого (викликається через HTTP кнопкою «🚀 Встановити оновлення автоматично»).<br>
-            <small style="color:#aaa">✨ Тека визначається тим самим автопошуком, що й інші Actions (кеш <code>overlayHtmlPath</code> / <code>indexHtmlPath</code>). Перед заміною робить backup старих файлів у підтеці <code>_backup_vX.X.X</code> на випадок збою. Результат пише у <code>update-result.json</code> поруч — адмінка читає його через HTTP, щоб показати реальний статус.</small><br><br>
-            <code style="display:block;white-space:pre;padding:8px;margin:6px 0;background:rgba(0,0,0,0.4);border-radius:6px;overflow-x:auto">using System;
-using System.IO;
-using System.Linq;
-using System.Net.Http;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-
-public class CPHInline
-{
-    private static readonly HttpClient http = new HttpClient();
-    // Захист від паралельних викликів — якщо HTTP-запит на InstallUpdate
-    // прийде кілька разів підряд (подвійний клік, ретрай), наступні виклики
-    // чекають, поки попередній повністю завершить запис файлів, замість
-    // того щоб одночасно писати в ті самі файли і пошкодити їх.
-    private static readonly SemaphoreSlim gate = new SemaphoreSlim(1, 1);
-
-    public bool Execute()
-    {
-        return InstallAsync().GetAwaiter().GetResult();
-    }
-
-    private async Task&lt;bool&gt; InstallAsync()
-    {
-        if (!await gate.WaitAsync(TimeSpan.FromSeconds(30)))
-        {
-            CPH.LogWarn("InstallUpdate: попередній виклик ще виконується, новий пропущено");
-            return false;
-        }
-
-        try
-        {
-            return await DoInstallAsync();
-        }
-        finally
-        {
-            gate.Release();
-        }
-    }
-
-    private async Task&lt;bool&gt; DoInstallAsync()
-    {
-        string indexUrl    = args.ContainsKey("indexUrl")    ? args["indexUrl"].ToString()    : "https://raw.githubusercontent.com/djesld12q-stack/RewardService/refs/heads/main/index.html";
-        string overlayUrl  = args.ContainsKey("overlayUrl")  ? args["overlayUrl"].ToString()  : "https://raw.githubusercontent.com/djesld12q-stack/RewardService/refs/heads/main/overlay.html";
-        string manifestUrl = args.ContainsKey("manifestUrl") ? args["manifestUrl"].ToString() : "https://raw.githubusercontent.com/djesld12q-stack/RewardService/refs/heads/main/manifest.json";
-
-        string folder = FindFolder();
-        if (folder == null)
-        {
-            WriteResult(false, null, "не вдалось визначити теку (overlay.html/index.html не знайдено). Передай args['folder'] вручну.");
-            CPH.LogError("InstallUpdate: теку не визначено");
-            return false;
-        }
-
-        string indexPath    = Path.Combine(folder, "index.html");
-        string overlayPath  = Path.Combine(folder, "overlay.html");
-        string manifestPath = Path.Combine(folder, "manifest.json");
-
-        try
-        {
-            // ── 1. Качаємо всі 3 файли заздалегідь (щоб не лишити теку в напівоновленому стані) ──
-            CPH.LogInfo("InstallUpdate: завантажую файли з GitHub...");
-            string newIndexHtml    = await http.GetStringAsync(indexUrl    + "?_=" + DateTime.UtcNow.Ticks);
-            string newOverlayHtml  = await http.GetStringAsync(overlayUrl  + "?_=" + DateTime.UtcNow.Ticks);
-            string newManifestJson = await http.GetStringAsync(manifestUrl + "?_=" + DateTime.UtcNow.Ticks);
-
-            if (string.IsNullOrWhiteSpace(newIndexHtml) || string.IsNullOrWhiteSpace(newOverlayHtml))
-            {
-                WriteResult(false, null, "завантажені файли порожні — перевір URL");
-                CPH.LogError("InstallUpdate: завантажений файл порожній");
-                return false;
-            }
-
-            // ── 2. Backup старих файлів ──────────────────────────────────
-            string version = ExtractManifestVersion(newManifestJson) ?? DateTime.UtcNow.ToString("yyyyMMddHHmmss");
-            string backupDir = Path.Combine(folder, "_backup_v" + version + "_" + DateTime.UtcNow.ToString("yyyyMMddHHmmss"));
-            Directory.CreateDirectory(backupDir);
-
-            if (File.Exists(indexPath))    File.Copy(indexPath,    Path.Combine(backupDir, "index.html"), true);
-            if (File.Exists(overlayPath))  File.Copy(overlayPath,  Path.Combine(backupDir, "overlay.html"), true);
-            if (File.Exists(manifestPath)) File.Copy(manifestPath, Path.Combine(backupDir, "manifest.json"), true);
-
-            // ── 3. Записуємо нові файли поверх старих ────────────────────
-            File.WriteAllText(indexPath,    newIndexHtml,    Encoding.UTF8);
-            File.WriteAllText(overlayPath,  newOverlayHtml,  Encoding.UTF8);
-            File.WriteAllText(manifestPath, newManifestJson, Encoding.UTF8);
-
-            // Кешуємо шляхи (про всяк випадок, якщо ще не закешовано)
-            CPH.SetGlobalVar("indexHtmlPath", indexPath, true);
-            CPH.SetGlobalVar("overlayHtmlPath", overlayPath, true);
-
-            WriteResult(true, version, null);
-            CPH.LogInfo("InstallUpdate: ✓ оновлено до версії " + version + " у теці " + folder + " (backup: " + backupDir + ")");
+            CPH.LogError("RefundChannelPoints: rewardId порожній — рефанд неможливий");
             return true;
         }
-        catch (Exception ex)
-        {
-            WriteResult(false, null, "помилка під час оновлення — " + ex.Message);
-            CPH.LogError("InstallUpdate: " + ex.Message);
-            return false;
-        }
-    }
 
-    private string ExtractManifestVersion(string manifestJson)
-    {
+        CPH.LogInfo($"RefundChannelPoints: user={userName} | rewardId={rewardId} | redemptionId={redemptionId}");
+
+        // Перевіряємо чи redemptionId є справжнім Twitch UUID
+        // Формат: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx (36 символів)
+        // Фейковий ID генерується як rewardId_ticks — Guid.TryParse його відхилить
+        bool isRealUuid = !string.IsNullOrEmpty(redemptionId) &amp;&amp; Guid.TryParse(redemptionId, out _);
+
+        if (!isRealUuid)
+        {
+            CPH.LogWarn($"RefundChannelPoints: ⚠ redemptionId='{redemptionId}' — не є Twitch UUID, рефанд через API неможливий.");
+            CPH.LogWarn("RefundChannelPoints: Зайди в Twitch Creator Dashboard → Channel Points → Manage Rewards і відхили вручну (Reject).");
+            return true;
+        }
+
+        bool success = false;
+
         try
         {
-            var m = System.Text.RegularExpressions.Regex.Match(manifestJson, "\"version\"\\s*:\\s*\"([^\"]+)\"");
-            return m.Success ? m.Groups[1].Value : null;
-        }
-        catch { return null; }
-    }
-
-    private void WriteResult(bool success, string version, string error)
-    {
-        try
-        {
-            string folder = FindFolder();
-            if (folder == null) return;
-
-            string finishedAt = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
-            string json = "{"
-                + "\"success\":" + (success ? "true" : "false") + ","
-                + "\"installedVersion\":" + (version != null ? "\"" + version + "\"" : "null") + ","
-                + "\"finishedAt\":\"" + finishedAt + "\","
-                + "\"error\":" + (error != null ? "\"" + error.Replace("\"", "'") + "\"" : "null")
-                + "}";
-
-            string outPath = Path.Combine(folder, "update-result.json");
-            File.WriteAllText(outPath, json, Encoding.UTF8);
+            // Єдиний правильний метод SB для скасування redemption і повернення поінтів
+            success = CPH.TwitchRedemptionCancel(rewardId, redemptionId);
         }
         catch (Exception ex)
         {
-            CPH.LogWarn("InstallUpdate: не вдалось записати update-result.json — " + ex.Message);
+            CPH.LogError($"RefundChannelPoints: Exception при TwitchRedemptionCancel — {ex.Message}");
         }
-    }
 
-    // =====================================================================
-    // Пошук робочої теки:
-    // 1) явний шлях у args['folder']
-    // 2) кешований overlayHtmlPath / indexHtmlPath
-    // 3) автопошук відносно теки Streamer.bot
-    // 4) автопошук по всіх локальних дисках (fallback)
-    // =====================================================================
-    private string FindFolder()
-    {
-        if (args.ContainsKey("folder"))
+        if (success)
         {
-            string f = args["folder"].ToString();
-            if (Directory.Exists(f)) return f;
+            CPH.LogInfo($"RefundChannelPoints: ✅ SUCCESS | user={userName} | rdmId={redemptionId}");
+            if (!string.IsNullOrEmpty(userName))
+                CPH.SendMessage($"↩️ @{userName}, твої поінти повернено!", true, true);
         }
-
-        string cachedOverlay = CPH.GetGlobalVar&lt;string&gt;("overlayHtmlPath", true);
-        if (!string.IsNullOrEmpty(cachedOverlay) &amp;&amp; File.Exists(cachedOverlay))
-            return Path.GetDirectoryName(cachedOverlay);
-
-        string cachedIndex = CPH.GetGlobalVar&lt;string&gt;("indexHtmlPath", true);
-        if (!string.IsNullOrEmpty(cachedIndex) &amp;&amp; File.Exists(cachedIndex))
-            return Path.GetDirectoryName(cachedIndex);
-
-        try
+        else
         {
-            string sbDir = AppDomain.CurrentDomain.BaseDirectory;
-            var found = SearchForFile(sbDir, "overlay.html", maxDepth: 4);
-            if (found != null) return Path.GetDirectoryName(found);
-        }
-        catch (Exception ex)
-        {
-            CPH.LogWarn("InstallUpdate: пошук біля SB не вдався — " + ex.Message);
+            CPH.LogError($"RefundChannelPoints: ❌ FAILED — TwitchRedemptionCancel повернув false");
+            CPH.LogError($"RefundChannelPoints: user={userName} | rewardId={rewardId} | rdmId={redemptionId}");
+            CPH.LogWarn("RefundChannelPoints: Зайди в Twitch Creator Dashboard → Channel Points і відхили вручну.");
         }
 
-        try
-        {
-            foreach (var drive in DriveInfo.GetDrives().Where(d =&gt; d.IsReady &amp;&amp; d.DriveType == DriveType.Fixed))
-            {
-                var found = SearchForFile(drive.RootDirectory.FullName, "overlay.html", maxDepth: 6);
-                if (found != null) return Path.GetDirectoryName(found);
-            }
-        }
-        catch (Exception ex)
-        {
-            CPH.LogWarn("InstallUpdate: пошук по дисках не вдався — " + ex.Message);
-        }
-
-        return null;
-    }
-
-    private string SearchForFile(string rootDir, string fileName, int maxDepth)
-    {
-        try
-        {
-            var direct = Path.Combine(rootDir, fileName);
-            if (File.Exists(direct)) return direct;
-            if (maxDepth &lt;= 0) return null;
-
-            foreach (var dir in Directory.EnumerateDirectories(rootDir))
-            {
-                string name = Path.GetFileName(dir).ToLowerInvariant();
-                if (name == "windows" || name == "$recycle.bin" || name == "node_modules" ||
-                    name == "program files" || name == "program files (x86)" ||
-                    name.StartsWith("$") || name.StartsWith("_backup_")) continue;
-
-                var result = SearchForFile(dir, fileName, maxDepth - 1);
-                if (result != null) return result;
-            }
-        }
-        catch { }
-        return null;
+        // Завжди true — щоб SB не вважав Action зламаною
+        return true;
     }
 }</code>
+
+            <strong>⚠️ Якщо рефанд не спрацьовує автоматично:</strong><br>
+            <small style="color:#ffd54f">
+            Twitch іноді не дозволяє скасувати старі або вже fulfilled redemptions через API.<br>
+            В такому випадку: <strong>Twitch Creator Dashboard → Channel Points → Manage Rewards → відхили вручну</strong>.<br>
+            Також переконайся що у Streamer.bot є підключений Twitch акаунт стримера з правами <code>channel:manage:redemptions</code>.
+            </small><br><br>
 
             <strong>13. WebSocket Server</strong> — увімкнений (127.0.0.1:8080)<br>
             <strong>12. HTTP Server</strong> — увімкнений (127.0.0.1:7474) + mapping <code>reward</code> → папка з файлами<br>
@@ -2373,9 +2258,15 @@ public class CPHInline
 
     <div class="grid">
 
-        <!-- LEFT: Form -->
+        <!-- LEFT: Collapsible Form -->
         <div class="card">
-            <h2>➕ <span id="formTitle">Додати алерт</span><span id="editingBadge"></span></h2>
+            <button class="form-toggle-btn" id="formToggleBtn" onclick="toggleFormPanel()">
+                <span>➕ <span id="formTitle">Додати алерт</span><span id="editingBadge"></span></span>
+                <span class="form-toggle-arrow">▼</span>
+            </button>
+
+            <div class="form-collapsible" id="formCollapsible">
+            <div style="height:18px"></div>
 
             <div class="form-group">
                 <label>Назва алерту</label>
@@ -2491,107 +2382,167 @@ public class CPHInline
                 <video id="previewVideo" style="display:none;width:100%;height:100%;object-fit:contain" controls></video>
                 <audio id="previewAudio" style="display:none;width:100%" controls></audio>
             </div>
+            </div><!-- /form-collapsible -->
         </div>
 
-        <!-- RIGHT: Configured alerts -->
+        <!-- RIGHT: Tabbed card -->
         <div class="card">
-            <h2>📋 Налаштовані алерти</h2>
+            <!-- TAB BAR -->
+            <div class="tab-bar">
+                <button class="tab-btn active" id="tabBtnAlerts" onclick="switchTab('alerts')">
+                    📋 Нагороди
+                </button>
+                <button class="tab-btn tab-log" id="tabBtnLog" onclick="switchTab('log')">
+                    🎟️ Журнал
+                    <span class="tab-badge" id="rdmCountBadge">0</span>
+                </button>
+            </div>
 
-            <!-- NICKNAME TOGGLE -->
-            <div class="chat-toggle-bar compact">
-                <span style="font-size:1.05em">👤</span>
-                <div class="chat-toggle-label">
-                    <strong>Показувати нікнейм на екрані при активації нагороди</strong>
-                    <small>Якщо увімкнено — під час відео показується ім'я користувача знизу екрану</small>
+            <!-- ═══════════════════════════════════════
+                 ВКЛАДКА 1: НАГОРОДИ
+            ════════════════════════════════════════ -->
+            <div class="tab-pane active" id="tabAlerts">
+
+                <!-- NICKNAME TOGGLE -->
+                <div class="chat-toggle-bar compact">
+                    <span style="font-size:1.05em">👤</span>
+                    <div class="chat-toggle-label">
+                        <strong>Показувати нікнейм на екрані при активації нагороди</strong>
+                        <small>Якщо увімкнено — під час відео показується ім'я користувача знизу екрану</small>
+                    </div>
+                    <span id="nickBadge" class="chat-status-badge off">🔇 Вимкнено</span>
+                    <label style="position:relative;display:inline-block;width:38px;height:22px;flex-shrink:0;cursor:pointer" title="Перемкнути показ нікнейму">
+                        <input type="checkbox" id="nickToggle" style="opacity:0;width:0;height:0;position:absolute" onchange="onNickToggle(this.checked)">
+                        <span id="nickTrack" style="position:absolute;inset:0;border-radius:22px;transition:background 0.2s,border-color 0.2s;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2)"></span>
+                        <span id="nickThumb" style="position:absolute;top:4px;left:4px;width:14px;height:14px;border-radius:50%;background:#fff;transition:transform 0.2s;transform:translateX(0px)"></span>
+                    </label>
                 </div>
-                <span id="nickBadge" class="chat-status-badge off">🔇 Вимкнено</span>
-                <label style="position:relative;display:inline-block;width:38px;height:22px;flex-shrink:0;cursor:pointer" title="Перемкнути показ нікнейму">
-                    <input type="checkbox" id="nickToggle" style="opacity:0;width:0;height:0;position:absolute" onchange="onNickToggle(this.checked)">
-                    <span id="nickTrack" style="position:absolute;inset:0;border-radius:22px;transition:background 0.2s,border-color 0.2s;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2)"></span>
-                    <span id="nickThumb" style="position:absolute;top:4px;left:4px;width:14px;height:14px;border-radius:50%;background:#fff;transition:transform 0.2s;transform:translateX(0px)"></span>
-                </label>
-            </div>
 
-            <!-- Sync status -->
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
-                <span id="syncBadge" class="sync-badge">⏳ Очікування WS...</span>
-                <button onclick="manualSync()" class="btn-secondary" style="padding:5px 12px;font-size:0.78em">🔄 Синхронізувати</button>
-            </div>
-
-            <!-- PAUSE ALERTS TOGGLE -->
-            <div class="pause-toggle-bar">
-                <span style="font-size:1.1em">⏸️</span>
-                <div class="ptl">
-                    <strong>Пауза алертів</strong>
-                    <small>Overlay не відтворює алерти поки увімкнено паузу</small>
+                <!-- Sync status -->
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+                    <span id="syncBadge" class="sync-badge">⏳ Очікування WS...</span>
+                    <button onclick="manualSync()" class="btn-secondary" style="padding:5px 12px;font-size:0.78em">🔄 Синхронізувати</button>
                 </div>
-                <span id="pauseBadge" class="chat-status-badge off">▶ Активні</span>
-                <label style="position:relative;display:inline-block;width:38px;height:22px;flex-shrink:0;cursor:pointer" title="Пауза/відновлення алертів">
-                    <input type="checkbox" id="pauseToggle" style="opacity:0;width:0;height:0;position:absolute" onchange="onPauseToggle(this.checked)">
-                    <span id="pauseTrack" style="position:absolute;inset:0;border-radius:22px;transition:background 0.2s,border-color 0.2s;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2)"></span>
-                    <span id="pauseThumb" style="position:absolute;top:4px;left:4px;width:14px;height:14px;border-radius:50%;background:#fff;transition:transform 0.2s;transform:translateX(0px)"></span>
-                </label>
-            </div>
 
-            <div style="font-size:0.78em;color:#666;line-height:1.5;margin-bottom:14px;padding:10px 12px;background:rgba(102,126,234,0.07);border-radius:8px;border:1px solid rgba(102,126,234,0.15)">
-                💡 Конфіг оновлюється <strong style="color:#8fa3f5">автоматично</strong> при кожному збереженні — overlay отримує зміни на живо, без перезавантаження.<br>
-                <span style="color:#555"></span>
-            </div>
-
-            <!-- Quick-test кнопка для відправки ConfigUpdate без зміни алертів -->
-            <button onclick="quickTest(null)" style="display:none" id="btnBroadcastAll"></button>
-
-            <!-- Import / Export -->
-            <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
-                <button class="btn-export" onclick="exportAlerts()">📤 Експорт</button>
-                <button class="btn-import" onclick="importAlertsSB()">📥 Імпорт</button>
-                <span style="color:#555;font-size:0.75em">або</span>
-                <button class="btn-import" style="font-size:0.78em;padding:5px 10px;opacity:0.7" onclick="document.getElementById('importFile').click()" title="Вибрати файл вручну">📁 з файлу</button>
-                <input type="file" id="importFile" accept=".json" style="display:none" onchange="importFromFile(event)">
-                <button class="btn-clear-all" onclick="clearAllAlerts()" title="Очистити весь список нагород">🧹 Очистити список</button>
-            </div>
-
-            <!-- Bulk select bar -->
-            <div class="bulk-bar" id="bulkBar">
-                <span class="bulk-bar-count" id="bulkCount">0 вибрано</span>
-                <button class="btn-danger" style="padding:5px 12px;font-size:0.82em" onclick="bulkDelete()">🗑 Видалити вибрані</button>
-                <button class="btn-secondary" style="padding:5px 12px;font-size:0.82em" onclick="toggleBulkMode(false)">✖ Скасувати</button>
-            </div>
-
-            <!-- Search + bulk toggle -->
-            <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center">
-                <div class="search-wrapper" style="margin-bottom:0;flex:1">
-                    <input type="text" class="search-input" id="alertSearch"
-                           placeholder="🔍 Пошук за назвою або Reward ID..."
-                           oninput="onSearchInput(this.value)">
-                    <button class="search-clear" id="searchClear" onclick="clearSearch()" title="Очистити">✕</button>
+                <!-- PAUSE ALERTS TOGGLE -->
+                <div class="pause-toggle-bar">
+                    <span style="font-size:1.1em">⏸️</span>
+                    <div class="ptl">
+                        <strong>Пауза алертів</strong>
+                        <small>Overlay не відтворює алерти поки увімкнено паузу</small>
+                    </div>
+                    <span id="pauseBadge" class="chat-status-badge off">▶ Активні</span>
+                    <label style="position:relative;display:inline-block;width:38px;height:22px;flex-shrink:0;cursor:pointer" title="Пауза/відновлення алертів">
+                        <input type="checkbox" id="pauseToggle" style="opacity:0;width:0;height:0;position:absolute" onchange="onPauseToggle(this.checked)">
+                        <span id="pauseTrack" style="position:absolute;inset:0;border-radius:22px;transition:background 0.2s,border-color 0.2s;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2)"></span>
+                        <span id="pauseThumb" style="position:absolute;top:4px;left:4px;width:14px;height:14px;border-radius:50%;background:#fff;transition:transform 0.2s;transform:translateX(0px)"></span>
+                    </label>
                 </div>
-                <button id="btnBulkToggle" onclick="toggleBulkMode(true)" title="Режим множинного вибору"
-                        class="btn-secondary" style="padding:7px 10px;font-size:0.85em;white-space:nowrap;flex-shrink:0">☑ Вибрати</button>
-            </div>
 
-            <!-- Queue status -->
-            <div class="queue-panel q-hidden" id="queuePanel">
-                <div class="queue-panel-header">
-                    <span>⚡ Відтворення в overlay</span>
-                    <span class="queue-badge" id="queueBadge">0</span>
+                <div style="font-size:0.78em;color:#666;line-height:1.5;margin-bottom:14px;padding:10px 12px;background:rgba(102,126,234,0.07);border-radius:8px;border:1px solid rgba(102,126,234,0.15)">
+                    💡 Конфіг оновлюється <strong style="color:#8fa3f5">автоматично</strong> при кожному збереженні — overlay отримує зміни на живо, без перезавантаження.
                 </div>
-                <div id="qNow"></div>
-                <div class="queue-progress" id="qProgWrap" style="display:none">
-                    <div class="queue-progress-bar" id="qProgBar" style="width:100%"></div>
-                </div>
-                <div id="qList"></div>
-            </div>
 
-            <div id="alertsList">
-                <div class="empty-state">
-                    <div class="empty-state-icon">📋</div>
-                    <p>Алерти ще не додані.<br>Додайте перший алерт зліва.</p>
+                <!-- Quick-test кнопка для відправки ConfigUpdate без зміни алертів -->
+                <button onclick="quickTest(null)" style="display:none" id="btnBroadcastAll"></button>
+
+                <!-- Import / Export -->
+                <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
+                    <button class="btn-export" onclick="exportAlerts()">📤 Експорт</button>
+                    <button class="btn-import" onclick="importAlertsSB()">📥 Імпорт</button>
+                    <span style="color:#555;font-size:0.75em">або</span>
+                    <button class="btn-import" style="font-size:0.78em;padding:5px 10px;opacity:0.7" onclick="document.getElementById('importFile').click()" title="Вибрати файл вручну">📁 з файлу</button>
+                    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importFromFile(event)">
+                    <button class="btn-clear-all" onclick="clearAllAlerts()" title="Очистити весь список нагород">🧹 Очистити список</button>
                 </div>
-            </div>
+
+                <!-- Bulk select bar -->
+                <div class="bulk-bar" id="bulkBar">
+                    <span class="bulk-bar-count" id="bulkCount">0 вибрано</span>
+                    <button class="btn-danger" style="padding:5px 12px;font-size:0.82em" onclick="bulkDelete()">🗑 Видалити вибрані</button>
+                    <button class="btn-secondary" style="padding:5px 12px;font-size:0.82em" onclick="toggleBulkMode(false)">✖ Скасувати</button>
+                </div>
+
+                <!-- Search + bulk toggle -->
+                <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center">
+                    <div class="search-wrapper" style="margin-bottom:0;flex:1">
+                        <input type="text" class="search-input" id="alertSearch"
+                               placeholder="🔍 Пошук за назвою або Reward ID..."
+                               oninput="onSearchInput(this.value)">
+                        <button class="search-clear" id="searchClear" onclick="clearSearch()" title="Очистити">✕</button>
+                    </div>
+                    <button id="btnBulkToggle" onclick="toggleBulkMode(true)" title="Режим множинного вибору"
+                            class="btn-secondary" style="padding:7px 10px;font-size:0.85em;white-space:nowrap;flex-shrink:0">☑ Вибрати</button>
+                </div>
+
+                <!-- Queue status -->
+                <div class="queue-panel q-hidden" id="queuePanel">
+                    <div class="queue-panel-header">
+                        <span>⚡ Відтворення в overlay</span>
+                        <span class="queue-badge" id="queueBadge">0</span>
+                    </div>
+                    <div id="qNow"></div>
+                    <div class="queue-progress" id="qProgWrap" style="display:none">
+                        <div class="queue-progress-bar" id="qProgBar" style="width:100%"></div>
+                    </div>
+                    <div id="qList"></div>
+                </div>
+
+                <!-- Toggle show/hide alerts list -->
+                <button class="alerts-toggle-btn" id="alertsToggleBtn" onclick="toggleAlertsList()">
+                    <span>
+                        📋 Список нагород
+                        <span id="alertsCountBadge" style="background:rgba(102,126,234,0.2);color:#8fa3f5;border:1px solid rgba(102,126,234,0.3);border-radius:8px;padding:1px 8px;font-size:0.85em;margin-left:6px;font-weight:700">0</span>
+                    </span>
+                    <span class="atb-arrow">▼</span>
+                </button>
+
+                <div id="alertsListWrapper">
+                <div id="alertsList">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📋</div>
+                        <p>Алерти ще не додані.<br>Додайте перший алерт зліва.</p>
+                    </div>
+                </div>
+                </div>
+
+            </div><!-- /tabAlerts -->
+
+            <!-- ═══════════════════════════════════════
+                 ВКЛАДКА 2: ЖУРНАЛ АКТИВАЦІЙ
+            ════════════════════════════════════════ -->
+            <div class="tab-pane" id="tabLog">
+
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+                    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+                        <button class="btn-secondary" style="padding:4px 10px;font-size:0.76em;flex-shrink:0"
+                                onclick="filterRdmRefunded()" id="rdmFilterRefundedBtn">🔴 Рефандовані</button>
+                        <button class="btn-rdm-clear" onclick="clearRedemptionLog()">🗑 Очистити</button>
+                    </div>
+                </div>
+
+                <div class="rdm-filters">
+                    <div class="rdm-search-wrap">
+                        <input type="text" class="rdm-search" id="rdmSearch"
+                               placeholder="🔍 Пошук за ніком або нагородою..."
+                               oninput="onRdmSearchInput(this.value)">
+                        <button class="rdm-search-clear" id="rdmSearchClear" onclick="clearRdmSearch()" title="Очистити">✕</button>
+                    </div>
+                </div>
+
+                <div class="rdm-list" id="rdmList">
+                    <div class="rdm-empty">
+                        <div class="rdm-empty-icon">🎟️</div>
+                        <p>Активацій ще не було.<br>Тут з'являтимуться всі Channel Point Redemptions.</p>
+                    </div>
+                </div>
+
+            </div><!-- /tabLog -->
+
         </div>
 
     </div>
+
 </div>
 
 <script>
@@ -2600,12 +2551,6 @@ public class CPHInline
 // =====================================================================
 const WS_URL   = 'ws://127.0.0.1:8080/';
 const HTTP_URL = 'http://127.0.0.1:7474';
-
-// ── Версія застосунку та джерело перевірки оновлень ──────────────────
-// let, бо при автоматичному оновленні (installUpdateAutomatically) значення
-// оновлюється в рантаймі без перезавантаження сторінки
-let APP_VERSION   = '1.0.0';
-const MANIFEST_URL  = 'https://raw.githubusercontent.com/djesld12q-stack/RewardService/refs/heads/main/manifest.json';
 
 // =====================================================================
 // STATE
@@ -2622,16 +2567,45 @@ let alertsPaused  = localStorage.getItem('alertsPaused')  === 'true';
 let bulkMode     = false;
 const bulkSelected = new Set();
 
+// Redemption Log
+let redemptionLog = [];
+let rdmSearchQuery = '';
+let rdmShowRefundedOnly = false;
+
+// Polling (резервний канал отримання активацій через globalVar)
+let _pollInterval       = null;
+let _lastRdmIdFromPoll  = null;   // останній redemptionId що ми вже бачили
+let _blockedIds         = new Set(); // ID які не мають знову з'являтись (рефанд / очищення)
+
+function loadBlockedIds() {
+    try {
+        const raw = localStorage.getItem('videoAlertBlockedIds');
+        if (raw) JSON.parse(raw).forEach(id => _blockedIds.add(id));
+    } catch(_) {}
+}
+function saveBlockedIds() {
+    try {
+        // Зберігаємо тільки останні 500 щоб не роздувати localStorage
+        const arr = [..._blockedIds].slice(-500);
+        localStorage.setItem('videoAlertBlockedIds', JSON.stringify(arr));
+    } catch(_) {}
+}
+function blockId(id) {
+    if (!id) return;
+    _blockedIds.add(id);
+    saveBlockedIds();
+}
+
 // =====================================================================
 // INIT
 // =====================================================================
 document.addEventListener('DOMContentLoaded', () => {
     loadAlerts();
+    loadBlockedIds();
+    loadRedemptionLog();
     connectWebSocket();
-
-    // ── Версія застосунку в шапці ───────────────────────────────
-    const verBadgeEl = document.getElementById('appVersionBadge');
-    if (verBadgeEl) verBadgeEl.textContent = 'v' + APP_VERSION;
+    // Polling стартує через 2с (fallback якщо WS не дає подій)
+    setTimeout(startAlertPolling, 2000);
 
     // ── Pause toggle ──────────────────────────────────────────
     const pauseToggleEl = document.getElementById('pauseToggle');
@@ -2672,6 +2646,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // Ініціалізуємо hint якщо поле вже заповнене
     const urlEl = document.getElementById('videoUrl');
     if (urlEl && urlEl.value) onMediaUrlChange(urlEl.value);
+
+    // Відновлюємо стан форми (collapsed / expanded)
+    const formWasOpen = localStorage.getItem('formPanelOpen') !== '0';
+    toggleFormPanel(formWasOpen);
+
+    // Відновлюємо стан списку нагород (shown / hidden)
+    applyAlertsListState();
 
     // Малюємо заливку повзунків відповідно до їх стартового value
     updateAllRangeFills();
@@ -2740,22 +2721,155 @@ function connectWebSocket() {
 // =====================================================================
 // ОБРОБКА WS ПОВІДОМЛЕНЬ
 // =====================================================================
+
+// Розпаковує SB broadcast-конверт у внутрішній payload { action, data }
+// CPH.WebsocketBroadcastJson загортає JSON у:
+//   { event: { source: "WebsocketCustomServer", type: "Broadcast" },
+//     data:  { message: "{\"action\":\"...\",\"data\":{...}}" } }
+// Також підтримує варіанти де data.data вже є об'єктом.
+function _sbUnpack(data) {
+    // data.data.message — рядок з JSON (основний формат)
+    const msg = data?.data?.message;
+    if (msg && typeof msg === 'string') {
+        try { return JSON.parse(msg); } catch(_) {}
+    }
+    // data.data — вже об'єкт з action
+    if (data?.data && typeof data.data === 'object' && data.data.action) {
+        return data.data;
+    }
+    // data сам є payload (прямий формат без конверта)
+    if (data?.action) return data;
+    return null;
+}
+
 function handleMessage(data) {
+    // ── ДІАГНОСТИКА: логуємо всі WS повідомлення в консоль ────────────
+    // Відкрий DevTools (F12) → Console щоб бачити реальну структуру від SB
+    const raw = JSON.stringify(data);
+    console.log('[WS RAW]', raw.slice(0, 300));
+
+    // ── Twitch WS event: ChannelPointsRewardRedemption ──────────────
     if (data.event?.type === 'ChannelPointsRewardRedemption') {
         const d = data.data || {};
-        const rewardId = d.reward?.id || d.rewardId || '';
-        const title    = d.reward?.title || d.rewardName || rewardId || '?';
-        toast(`🎁 Активовано: ${title}`, 'info');
+        const rewardId    = d.reward?.id   || d.rewardId   || '';
+        const title       = d.reward?.title || d.rewardName || rewardId || '?';
+        const userName    = d.user_name     || d.userName   || d.user   || '';
+        const redemptionId = d.id || d.redemptionId || d.redemption_id
+                           || (rewardId + '_' + Date.now());
 
-        // Додаємо в трекер черги
+        console.log('[WS] ChannelPointsRewardRedemption → rewardId:', rewardId, 'rdmId:', redemptionId, 'user:', userName);
+        toast(`🎁 Активовано: ${title}` + (userName ? ` (${userName})` : ''), 'info');
+
+        addRedemption({ id: redemptionId, rewardId, rewardTitle: title, userName, ts: new Date() });
+
         const matched = alerts.find(a => String(a.rewardId).trim() === String(rewardId).trim());
         if (matched) enqueuePlayback(matched);
+        return;
     }
+
+    // ── Broadcast-конверт від SB (WebsocketBroadcastJson) ──────────
+    // Визначаємо чи це конверт і розпаковуємо
+    const isBroadcastEnvelope =
+        data.event?.source === 'WebsocketCustomServer' ||
+        data.event?.source === 'WebsocketClient'       ||
+        data.event?.type   === 'Broadcast'             ||
+        (data.event?.source === 'General' && data.event?.type === 'Custom');
+
+    const payload = isBroadcastEnvelope ? _sbUnpack(data) : (data.action ? data : null);
+
+    if (!payload) {
+        console.log('[WS] Невідомий формат, ігноруємо. event:', JSON.stringify(data.event));
+        return;
+    }
+
+    console.log('[WS] payload.action:', payload.action, '| isBroadcast:', isBroadcastEnvelope);
+
+    // ── VideoAlert ──────────────────────────────────────────────────
+    if (payload.action === 'VideoAlert' && payload.data) {
+        const d        = payload.data;
+        const rdmId    = d.redemptionId || '';
+        const rewardId = d.rewardId     || '';
+        const title    = d.name         || rewardId || '?';
+        const userName = d.userName     || '';
+
+        console.log('[WS] VideoAlert → rewardId:', rewardId, 'rdmId:', rdmId, 'user:', userName);
+
+        const dedupeId = rdmId || (rewardId + '_' + Date.now());
+        if (!redemptionLog.find(r => r.id === dedupeId)) {
+            addRedemption({ id: dedupeId, rewardId, rewardTitle: title, userName, ts: new Date() });
+        }
+
+        if (rewardId) {
+            const matched = alerts.find(a => String(a.rewardId).trim() === String(rewardId).trim());
+            if (matched && !currentlyPlaying && !playbackQueue.find(q => q.rewardId === rewardId)) {
+                enqueuePlayback(matched);
+            }
+        }
+        return;
+    }
+
+    // ── ConfigUpdate (якщо прийде через WS) ────────────────────────
+    if (payload.action === 'ConfigUpdate') {
+        console.log('[WS] ConfigUpdate отримано');
+        return;
+    }
+
+    console.log('[WS] payload.action не розпізнано:', payload.action);
 }
 
 // =====================================================================
-// ЗБЕРЕЖЕННЯ АЛЕРТУ
+// POLLING last-alert.json — резервний канал для index.html
+// C# VideoAlertBroadcast пише файл поряд з index.html,
+// SB HTTP маппінг /reward/ роздає його як статику.
 // =====================================================================
+function startAlertPolling() {
+    if (_pollInterval) return;
+    _pollInterval = setInterval(pollLastVideoAlert, 2000);
+    console.log('[POLL] polling запущено (кожні 2с) → /reward/last-alert.json');
+}
+
+async function pollLastVideoAlert() {
+    try {
+        const res = await fetch(
+            `${HTTP_URL}/reward/last-alert.json?_=${Date.now()}`,
+            { signal: AbortSignal.timeout(1500) }
+        );
+        if (!res.ok) return;
+
+        let entry;
+        try { entry = await res.json(); } catch(_) { return; }
+
+        if (!entry || !entry.redemptionId) return;
+
+        // Дедуплікація по redemptionId
+        if (entry.redemptionId === _lastRdmIdFromPoll) return;
+        _lastRdmIdFromPoll = entry.redemptionId;
+
+        // Заблокований (рефанд або очищення)?
+        if (_blockedIds.has(entry.redemptionId)) return;
+
+        // Вже є в журналі (прийшло через WS раніше)?
+        if (redemptionLog.find(r => r.id === entry.redemptionId)) return;
+
+        console.log('[POLL] нова активація:', entry);
+
+        const rewardId = entry.rewardId || '';
+        const userName = entry.userName || '';
+        const title    = entry.name     || rewardId || '?';
+        const ts       = entry.ts ? new Date(entry.ts) : new Date();
+
+        toast(`🎁 Активовано: ${title}` + (userName ? ` (${userName})` : ''), 'info');
+        addRedemption({ id: entry.redemptionId, rewardId, rewardTitle: title, userName, ts });
+
+        const matched = alerts.find(a => String(a.rewardId).trim() === String(rewardId).trim());
+        if (matched) enqueuePlayback(matched);
+
+    } catch(_) {
+        // timeout або файл ще не існує — мовчимо
+    }
+}
+
+
 function saveAlert() {
     try {
         const getVal = (id) => {
@@ -3276,6 +3390,10 @@ function renderAlerts() {
     const clearBtn = document.getElementById('searchClear');
     if (clearBtn) clearBtn.className = 'search-clear' + (searchQuery ? ' visible' : '');
 
+    // Оновлюємо лічильник у кнопці згортання
+    const badge = document.getElementById('alertsCountBadge');
+    if (badge) badge.textContent = alerts.length;
+
     if (alerts.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
@@ -3350,6 +3468,7 @@ function editAlert(id) {
     if (!a) return;
 
     editingId = id;
+    toggleFormPanel(true); // розгортаємо форму при редагуванні
 
     const setIfExists = (id, prop, value) => {
         const el = document.getElementById(id);
@@ -3868,173 +3987,279 @@ function wlog(type, text) {
     } catch(_) {}
 }
 
-// =====================================================================
-// ПЕРЕВІРКА ОНОВЛЕНЬ (manifest.json на GitHub)
-// =====================================================================
-let latestManifest = null;
 
-async function checkForUpdate() {
-    const btn     = document.getElementById('checkUpdateBtn');
-    const btnText = document.getElementById('checkUpdateBtnText');
+
+
+// =====================================================================
+// COLLAPSIBLE FORM PANEL
+// =====================================================================
+function toggleFormPanel(forceOpen) {
+    const btn  = document.getElementById('formToggleBtn');
+    const body = document.getElementById('formCollapsible');
+    if (!btn || !body) return;
+    const isOpen = btn.classList.contains('open');
+    const open   = forceOpen !== undefined ? forceOpen : !isOpen;
+    btn.classList.toggle('open', open);
+    body.classList.toggle('open', open);
+    try { localStorage.setItem('formPanelOpen', open ? '1' : '0'); } catch(_) {}
+}
+
+// =====================================================================
+// TABS
+// =====================================================================
+function switchTab(name) {
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tabAlerts').classList.toggle('active', name === 'alerts');
+    document.getElementById('tabLog').classList.toggle('active', name === 'log');
+    document.getElementById('tabBtnAlerts').classList.toggle('active', name === 'alerts');
+    document.getElementById('tabBtnLog').classList.toggle('active', name === 'log');
+}
+
+// =====================================================================
+// REDEMPTION LOG — PERSISTENCE (localStorage)
+// =====================================================================
+const RDM_LS_KEY = 'videoAlertRdmLog';
+const RDM_MAX_AGE_DAYS = 30;
+
+function saveRedemptionLog() {
+    try {
+        localStorage.setItem(RDM_LS_KEY, JSON.stringify(redemptionLog));
+    } catch(_) {}
+}
+
+function loadRedemptionLog() {
+    try {
+        const raw = localStorage.getItem(RDM_LS_KEY);
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return;
+        // Відкидаємо записи старіші за 30 днів
+        const cutoff = Date.now() - RDM_MAX_AGE_DAYS * 86400000;
+        redemptionLog = parsed.filter(r => {
+            if (!r || !r.id) return false;
+            if (!r.ts) return true; // немає часу — залишаємо
+            return new Date(r.ts).getTime() > cutoff;
+        });
+        renderRedemptionLog();
+    } catch(_) {}
+}
+
+// =====================================================================
+// REDEMPTION LOG
+// =====================================================================
+
+function addRedemption(entry) {
+    // entry: { id, rewardId, rewardTitle, userName, ts }
+    redemptionLog.unshift({ ...entry, refunded: false });
+    if (redemptionLog.length > 200) redemptionLog.pop(); // обмеження 200 записів
+    saveRedemptionLog();
+    renderRedemptionLog();
+}
+
+function clearRedemptionLog() {
+    if (redemptionLog.length === 0) { toast('⚠️ Журнал вже порожній', 'error'); return; }
+    if (!confirm(`Очистити журнал активацій (${redemptionLog.length} записів)?`)) return;
+    // Блокуємо всі ID що зараз в журналі щоб polling не відновив їх
+    redemptionLog.forEach(r => blockId(r.id));
+    redemptionLog = [];
+    rdmSearchQuery = '';
+    rdmShowRefundedOnly = false;
+    const rdmSearchEl = document.getElementById('rdmSearch');
+    if (rdmSearchEl) rdmSearchEl.value = '';
+    updateRdmFilterBtn();
+    saveRedemptionLog();
+    renderRedemptionLog();
+    toast('🗑 Журнал активацій очищено', 'info');
+}
+
+function onRdmSearchInput(val) {
+    rdmSearchQuery = val || '';
+    const clearBtn = document.getElementById('rdmSearchClear');
+    if (clearBtn) clearBtn.className = 'rdm-search-clear' + (rdmSearchQuery ? ' visible' : '');
+    renderRedemptionLog();
+}
+
+function clearRdmSearch() {
+    rdmSearchQuery = '';
+    const inp = document.getElementById('rdmSearch');
+    if (inp) inp.value = '';
+    const clearBtn = document.getElementById('rdmSearchClear');
+    if (clearBtn) clearBtn.className = 'rdm-search-clear';
+    renderRedemptionLog();
+}
+
+function filterRdmRefunded() {
+    rdmShowRefundedOnly = !rdmShowRefundedOnly;
+    updateRdmFilterBtn();
+    renderRedemptionLog();
+}
+
+function updateRdmFilterBtn() {
+    const btn = document.getElementById('rdmFilterRefundedBtn');
     if (!btn) return;
-
-    btn.classList.remove('up-to-date');
-    btn.classList.add('checking');
-    btn.disabled = true;
-    if (btnText) btnText.textContent = 'Перевірка...';
-
-    try {
-        const res = await fetch(MANIFEST_URL + '?_=' + Date.now(), { cache: 'no-store' });
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        const manifest = await res.json();
-        latestManifest = manifest;
-
-        if (manifest && manifest.version && isNewerVersion(manifest.version, APP_VERSION)) {
-            showUpdateBanner(manifest);
-            if (btnText) btnText.textContent = 'Є оновлення!';
-            toast(`🔔 Доступна нова версія ${manifest.version}`, 'info');
-        } else {
-            if (btnText) btnText.textContent = 'Версія актуальна';
-            btn.classList.add('up-to-date');
-            toast('✅ У вас остання версія', 'success');
-            setTimeout(() => {
-                if (btnText) btnText.textContent = 'Перевірити оновлення';
-                btn.classList.remove('up-to-date');
-            }, 4000);
-        }
-    } catch (err) {
-        if (btnText) btnText.textContent = 'Помилка перевірки';
-        toast('⚠️ Не вдалося перевірити оновлення', 'error');
-        setTimeout(() => { if (btnText) btnText.textContent = 'Перевірити оновлення'; }, 4000);
-    } finally {
-        btn.classList.remove('checking');
-        btn.disabled = false;
+    if (rdmShowRefundedOnly) {
+        btn.style.background    = 'rgba(220,53,69,0.22)';
+        btn.style.color         = '#ff6b7a';
+        btn.style.borderColor   = 'rgba(220,53,69,0.45)';
+    } else {
+        btn.style.background    = '';
+        btn.style.color         = '';
+        btn.style.borderColor   = '';
     }
 }
 
-// Порівняння семвер-версій виду "1.2.3"
-function isNewerVersion(remote, local) {
-    const r = String(remote).split('.').map(n => parseInt(n, 10) || 0);
-    const l = String(local).split('.').map(n => parseInt(n, 10) || 0);
-    for (let i = 0; i < Math.max(r.length, l.length); i++) {
-        const rv = r[i] || 0, lv = l[i] || 0;
-        if (rv > lv) return true;
-        if (rv < lv) return false;
+function getFilteredRedemptions() {
+    let list = redemptionLog;
+    if (rdmShowRefundedOnly) list = list.filter(r => r.refunded);
+    if (rdmSearchQuery) {
+        const q = rdmSearchQuery.toLowerCase();
+        list = list.filter(r =>
+            (r.userName     || '').toLowerCase().includes(q) ||
+            (r.rewardTitle  || '').toLowerCase().includes(q) ||
+            (r.rewardId     || '').toLowerCase().includes(q)
+        );
     }
-    return false;
+    return list;
 }
 
-function showUpdateBanner(manifest) {
-    const banner   = document.getElementById('updateBanner');
-    const verText  = document.getElementById('updateVerText');
-    const notesEl  = document.getElementById('updateNotesText');
-    if (!banner) return;
+function renderRedemptionLog() {
+    const list    = document.getElementById('rdmList');
+    const badge   = document.getElementById('rdmCountBadge');
+    if (!list) return;
 
-    if (verText) verText.textContent = `${APP_VERSION} → ${manifest.version}`;
-    if (notesEl) notesEl.textContent = manifest.notes || 'Вийшла нова версія програми.';
-    banner.classList.add('show');
+    const all      = redemptionLog.length;
+    const filtered = getFilteredRedemptions();
+
+    if (badge) { badge.textContent = all; }
+
+    if (all === 0) {
+        list.innerHTML = `<div class="rdm-empty">
+            <div class="rdm-empty-icon">🎟️</div>
+            <p>Активацій ще не було.<br>Тут з'являтимуться всі Channel Point Redemptions.</p>
+        </div>`;
+        return;
+    }
+
+    if (filtered.length === 0) {
+        list.innerHTML = `<div class="rdm-empty">
+            <div class="rdm-empty-icon">🔍</div>
+            <p>Нічого не знайдено.</p>
+        </div>`;
+        return;
+    }
+
+    list.innerHTML = filtered.map((r, i) => {
+        const timeStr = formatRdmTime(r.ts);
+        const refBtnHtml = r.refunded
+            ? `<span class="rdm-refunded-badge">↩ Рефанд</span>`
+            : `<button class="btn-refund"
+                 onclick="refundRedemption('${escAttr(r.id)}','${escAttr(r.rewardId)}','${escAttr(r.userName)}','${escAttr(r.rewardTitle)}')"
+                 title="Повернути бали користувачу">💸 Рефанд</button>`;
+        return `
+        <div class="rdm-item${r.refunded ? ' refunded' : ''}" data-rdm-id="${escHtml(r.id)}">
+            <div class="rdm-item-info">
+                <div class="rdm-item-name">${escHtml(r.rewardTitle || '—')}</div>
+                <div class="rdm-item-meta">
+                    <span class="rdm-item-user">👤 ${escHtml(r.userName || 'невідомо')}</span>
+                    <span class="rdm-item-time">🕐 ${timeStr}</span>
+                </div>
+            </div>
+            ${refBtnHtml}
+        </div>`;
+    }).join('');
 }
 
-function dismissUpdateBanner() {
-    const banner = document.getElementById('updateBanner');
-    if (banner) banner.classList.remove('show');
-    const resBox = document.getElementById('installCheckResult');
-    if (resBox) { resBox.style.display = 'none'; resBox.textContent = ''; }
+function formatRdmTime(ts) {
+    if (!ts) return '—';
+    const d = ts instanceof Date ? ts : new Date(ts);
+    if (isNaN(d)) return '—';
+    const pad = n => String(n).padStart(2, '0');
+    return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 }
 
-// ── Повністю автоматичне оновлення ────────────────────────────────────
-// Викликає C# Action InstallUpdate → той сам качає index.html/overlay.html/
-// manifest.json з GitHub і записує їх ПРЯМО в робочу теку на диску (без
-// Downloads, без ручного копіювання). Потім читає update-result.json,
-// щоб показати реальний статус, і пропонує перезавантажити сторінку.
-let installInProgress = false;
+function escAttr(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/\\/g,'\\\\')
+        .replace(/'/g,"\\'")
+        .replace(/"/g,'&quot;');
+}
 
-async function installUpdateAutomatically() {
-    if (installInProgress) return; // захист від подвійного кліку / паралельних викликів
-    installInProgress = true;
+async function refundRedemption(rdmId, rewardId, userName, rewardTitle) {
+    if (!rewardId) {
+        toast('⚠️ Немає rewardId для рефанду', 'error');
+        return;
+    }
 
-    const btn    = document.getElementById('installUpdateBtn');
-    const resBox = document.getElementById('installCheckResult');
-    if (!btn || !resBox) { installInProgress = false; return; }
+    const entry = redemptionLog.find(r => r.id === rdmId);
+    if (!entry) return;
 
-    const expectedVersion = latestManifest && latestManifest.version ? latestManifest.version : null;
+    // Видаляємо з журналу і блокуємо щоб polling не відновив
+    blockId(rdmId);
+    redemptionLog = redemptionLog.filter(r => r.id !== rdmId);
+    saveRedemptionLog();
+    renderRedemptionLog();
 
-    btn.disabled = true;
-    btn.textContent = '⏳ Встановлення...';
-    resBox.style.display = 'block';
-    resBox.style.background = 'rgba(255,255,255,0.06)';
-    resBox.style.color = '#ccc';
-    resBox.textContent = '⏳ Streamer.bot качає нові файли з GitHub і записує їх на диск...';
+    // Аргументи що передаємо в C# Action RefundChannelPoints:
+    // - rewardId     : ID нагороди (обов'язковий для Twitch API)
+    // - userName     : нік користувача (для пошуку pending redemption)
+    // - redemptionId : унікальний ID активації (якщо є справжній від Twitch — точний рефанд)
+    const args = { rewardId, userName, redemptionId: rdmId };
 
+    let sbSuccess = false;   // чи SB взагалі отримав запит
+    let httpOk    = false;   // чи HTTP відповів 200
+
+    // ── Спроба 1: через HTTP DoAction ────────────────────────────────
     try {
-        // 1. Запускаємо Action — нехай сам скачає і запише файли
-        await fetch(`${HTTP_URL}/DoAction`, {
+        const res = await fetch(`${HTTP_URL}/DoAction`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: { name: 'InstallUpdate', group: '' }, args: {} }),
-            signal: AbortSignal.timeout(20000)
+            body: JSON.stringify({
+                action: { name: 'RefundChannelPoints', group: '' },
+                args
+            }),
+            signal: AbortSignal.timeout(6000)
         });
+        httpOk = res.ok;
+        if (res.ok) sbSuccess = true;
+    } catch(e) {
+        console.warn('refundRedemption HTTP error:', e);
+    }
 
-        // 2. Пауза, щоб встигло завантажитись і записатись на диск
-        await new Promise(r => setTimeout(r, 2000));
-
-        // 3. Читаємо результат напряму з диска через HTTP (Static Folder /reward/)
-        const res = await fetch(`${HTTP_URL}/reward/update-result.json?_=${Date.now()}`, {
-            cache: 'no-store',
-            signal: AbortSignal.timeout(5000)
-        });
-        if (!res.ok) throw new Error('update-result.json не знайдено (HTTP ' + res.status + ')');
-        const data = await res.json();
-
-        if (!data.success) {
-            resBox.style.background = 'rgba(220,53,69,0.15)';
-            resBox.style.color = '#ffb3ba';
-            resBox.textContent = `⚠️ Оновлення не вдалось: ${data.error || 'невідома помилка'}`;
-            toast('⚠️ Автоматичне оновлення не вдалось', 'error');
-            btn.disabled = false;
-            btn.textContent = '🚀 Встановити оновлення автоматично';
-            return;
+    // ── Спроба 2: через WebSocket DoAction (fallback) ─────────────────
+    if (!sbSuccess && ws && ws.readyState === WebSocket.OPEN) {
+        try {
+            ws.send(JSON.stringify({
+                request: 'DoAction',
+                id: 'refund_' + rdmId,
+                action: { name: 'RefundChannelPoints', group: '' },
+                args
+            }));
+            sbSuccess = true; // WS не дає синхронний результат — вважаємо що надіслали
+        } catch(e) {
+            console.warn('refundRedemption WS error:', e);
         }
+    }
 
-        resBox.style.background = 'rgba(40,167,69,0.15)';
-        resBox.style.color = '#5be58b';
-        resBox.textContent = `✅ Файли записано на диск (версія ${data.installedVersion || expectedVersion || '?'}). Оновлюю інтерфейс...`;
-        toast(`✅ Оновлено до ${data.installedVersion || expectedVersion}. Версію на диску підтверджено.`, 'success');
-
-        // 4. НЕ робимо location.reload() / location.href — HTTP Server у Streamer.bot
-        //    (v1.0.4) кешує вміст файлу в пам'яті процесу і часто віддає стару
-        //    відповідь на повторний GET того самого шляху незалежно від
-        //    cache-busting query-параметра. Тому замість нового мережевого
-        //    запиту до index.html просто оновлюємо стан на місці: піднімаємо
-        //    APP_VERSION у пам'яті JS і перемальовуємо бейдж в шапці.
-        //    Реальний файл на диску вже оновлено (це підтвердив update-result.json) —
-        //    повна перезагрузка JS станеться сама при наступному природньому
-        //    відкритті панелі (перезапуск OBS / docked panel), а до того часу
-        //    адмінка просто працює далі на новій логіці без розриву з'єднання.
-        if (data.installedVersion) {
-            APP_VERSION = data.installedVersion;
-            const verBadgeEl = document.getElementById('appVersionBadge');
-            if (verBadgeEl) verBadgeEl.textContent = 'v' + APP_VERSION;
-        }
-        btn.textContent = '✅ Встановлено';
-        setTimeout(() => {
-            dismissUpdateBanner();
-            btn.disabled = false;
-            btn.textContent = '🚀 Встановити оновлення автоматично';
-        }, 2500);
-
-    } catch (err) {
-        resBox.style.background = 'rgba(220,53,69,0.15)';
-        resBox.style.color = '#ffb3ba';
-        resBox.textContent = '⚠️ Не вдалось встановити — переконайтесь що Action "InstallUpdate" додано в Streamer.bot і HTTP Server увімкнено.';
-        toast('⚠️ Не вдалось викликати InstallUpdate', 'error');
-        btn.disabled = false;
-        btn.textContent = '🚀 Встановити оновлення автоматично';
-    } finally {
-        installInProgress = false;
+    if (sbSuccess) {
+        toast(`↩️ Рефанд надіслано: ${userName || '?'} ← «${rewardTitle}»`, 'success');
+        wlog('log', `↩ Рефанд: ${userName} | reward=${rewardTitle} | rdmId=${rdmId}`);
+    } else {
+        // Не вдалося надіслати — відкочуємо: повертаємо запис в лог і знімаємо блокування
+        _blockedIds.delete(rdmId);
+        saveBlockedIds();
+        redemptionLog.unshift(entry);
+        redemptionLog.sort((a, b) => new Date(b.ts) - new Date(a.ts));
+        saveRedemptionLog();
+        renderRedemptionLog();
+        toast(
+            '❌ Рефанд не вдався — Streamer.bot недоступний. ' +
+            'Перевір HTTP Server (порт 7474) і наявність Action "RefundChannelPoints".',
+            'error'
+        );
     }
 }
-
 
 function escHtml(str) {
     if (!str) return '';
@@ -4199,6 +4424,30 @@ function onDragEnd(e) {
     e.currentTarget.classList.remove('dragging');
     document.querySelectorAll('.alert-item').forEach(el => el.classList.remove('drag-over'));
     dragSrcIdx = null;
+}
+
+// =====================================================================
+// TOGGLE ALERTS LIST (згортання / розгортання списку нагород)
+// =====================================================================
+let alertsListVisible = localStorage.getItem('alertsListVisible') !== '0';
+
+function toggleAlertsList() {
+    alertsListVisible = !alertsListVisible;
+    localStorage.setItem('alertsListVisible', alertsListVisible ? '1' : '0');
+    applyAlertsListState();
+}
+
+function applyAlertsListState() {
+    const btn     = document.getElementById('alertsToggleBtn');
+    const wrapper = document.getElementById('alertsListWrapper');
+    if (!btn || !wrapper) return;
+    if (alertsListVisible) {
+        btn.classList.remove('atb-collapsed');
+        wrapper.classList.remove('atb-collapsed');
+    } else {
+        btn.classList.add('atb-collapsed');
+        wrapper.classList.add('atb-collapsed');
+    }
 }
 
 </script>
